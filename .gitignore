@@ -30,3 +30,13 @@
 *.exe
 *.out
 *.app
+
+# Logs
+*.log
+
+# Misc
+*.tcl
+*.bin
+*.make
+*.cmake
+
