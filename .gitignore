@@ -39,4 +39,8 @@
 *.bin
 *.make
 *.cmake
+/build/*.cmake
+/build/*.json
+/CMakeFiles
+
 
