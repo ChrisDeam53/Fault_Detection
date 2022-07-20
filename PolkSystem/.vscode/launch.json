@@ -1,0 +1,39 @@
+{
+    "name": "PolkSystem Executable",
+    "type": "cppdbg",
+    "request": "launch",
+    "program": "/home/rapid/Fault_Detection/PolkSystem/build/Polk",
+    "externalConsole": true,
+    "logging": {
+      "moduleLoad": false,
+      "trace": true
+    },
+
+    "showDisplayString": true,
+    "configurations": [
+    {
+        "name": "(gdb) Launch PolkSystem Executable",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/build/Polk",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${fileDirname}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            },
+            {
+                "description":  "Set Disassembly Flavor to Intel",
+                "text": "-gdb-set disassembly-flavor intel",
+                "ignoreFailures": true
+            }
+        ]
+    }
+    ]
+  }
