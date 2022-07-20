@@ -41,5 +41,6 @@
 *.cmake
 /build/*
 /CMakeFiles/*
-
+PolkSystem/CMakeFiles/*
+PolkSystem/build/*
 
