@@ -2,7 +2,7 @@
     "name": "PolkSystem Executable",
     "type": "cppdbg",
     "request": "launch",
-    "program": "/home/rapid/Fault_Detection/PolkSystem/build/Polk",
+    "program": "${workspaceFolder}/build/Polk",
     "externalConsole": true,
     "logging": {
       "moduleLoad": false,
@@ -35,5 +35,5 @@
             }
         ]
     }
-    ]
+    ],
   }

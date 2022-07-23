@@ -9,17 +9,19 @@
 
 using namespace utils;
 
-int ImageViewer::OpenImage()
+/////////////////////////////////////////////////////////////////////////////////////
+bool ImageViewer::OpenImage()
 {
-    cv::Mat img = cv::imread("/src/utils/token_1.png", cv::IMREAD_COLOR);
+    cv::Mat img = cv::imread("token_1.png", cv::IMREAD_COLOR);
 
     if(img.empty())
     {
         std::cout << "Could not read the image." << std::endl;
-        return 1;
+        return false;
     }
 
-    cv::imwrite("/src/utils/test.png", img);
+    cv::imwrite("../../images/test.png", img);
 
-    return 0;
+    return true;
 }
+/////////////////////////////////////////////////////////////////////////////////////

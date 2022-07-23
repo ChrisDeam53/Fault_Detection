@@ -17,7 +17,8 @@ file( GLOB UTILS_HEADERS src/utils/ImageViewer.hh)
 add_library( UTILS_LIB ${UTILS_SOURCES} ${UTILS_HEADERS} )
 
 # Sets the main executable file. Polk. Run "./Polk" in "/build" -> To execute the binary file.
-add_executable( ${PROJECT_NAME} src/main.cpp src/utils/ImageViewer.hh src/utils/ImageViewer.cpp src/utils/token_1.png)
+# Currently, to execute OpenCV properly, you need to run "./Polk" in the top-level directory.
+add_executable( ${PROJECT_NAME} src/main.cpp src/utils/ImageViewer.hh src/utils/ImageViewer.cpp )
 
 # Sets Util files. (Not currently in use)
 set( UTILS src/utils/ImageViewer.hh src/utils/ImageViewer.c )
@@ -30,7 +31,7 @@ set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_NAME}/lib )
 # Sets the lib files to be moved into /lib
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_NAME}/lib )
 # Sets the bin files to be moved into /bin
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_NAME}/bin )
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_NAME}/build )
 
 set( CPACK_PROJECT_NAME ${PROJECT_NAME} )
 set( CPACK_PROJECT_VERSION ${PROJECT_VERSION})

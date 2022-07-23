@@ -10,9 +10,12 @@ namespace utils
         public:
 
         //////////////////////////////////////////////////
-        /// @brief Test method.
+        /// @author Christopher Deam.
+        /// @note OpenImage.
+        /// @brief Reads an image that is supplied & writes the image into "/images".
+        /// @return True if image can be opened.
         //////////////////////////////////////////////////
-        int OpenImage();
+        bool OpenImage(); 
 
         private:
     };
