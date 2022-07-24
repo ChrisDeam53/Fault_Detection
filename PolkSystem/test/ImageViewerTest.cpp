@@ -13,7 +13,7 @@
 TEST(ImageViewerTest, TestCVImread)
 {
     utils::ImageViewer viewer;
-    cv::Mat image = cv::imread("../images/token_1.png", cv::IMREAD_COLOR);
+    cv::Mat image = cv::imread("../images/unknown.png", cv::IMREAD_COLOR);
     bool response = viewer.OpenImage(image);
     EXPECT_TRUE(response);
 }

@@ -33,24 +33,24 @@ add_executable( ${PROJECT_NAME} src/main.cpp src/utils/ImageViewer.hh src/utils/
 # GTest
 ################################################################
 
-# include(FetchContent)
-# FetchContent_Declare(
-#   googletest
-#   GIT_REPOSITORY https://github.com/google/googletest.git
-#   GIT_TAG release-1.12.1
-# )
-# # For Windows: Prevent overriding the parent project's compiler/linker settings
-# set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-# FetchContent_MakeAvailable(googletest)
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG release-1.12.1
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 
-# enable_testing()
+enable_testing()
 
-# add_executable(UnitTests test/ImageViewerTest.cpp)
+add_executable(UnitTests test/ImageViewerTest.cpp src/utils/ImageViewer.hh src/utils/ImageViewer.cpp )
 
-# target_link_libraries(UnitTests GTest::gtest_main)
+target_link_libraries(UnitTests ${OpenCV_LIBS} GTest::gtest_main glog::glog)
 
-# include(GoogleTest)
-# gtest_discover_tests(UnitTests)
+include(GoogleTest)
+gtest_discover_tests(UnitTests)
 
 ################################################################
 # Specifies libs.

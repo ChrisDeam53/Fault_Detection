@@ -17,13 +17,10 @@ bool ImageViewer::OpenImage(cv::Mat image)
         return false;
     }
 
-    image;
-
-    const std::string filePath("../src/../images/writtenImage3.png");
+    const std::string filePath("../src/../images/writtenImage4.png");
     cv::imwrite(filePath, image);
     LOG(INFO) << "Image has been written to: " << filePath;
 
-    
     return true;
 }
 /////////////////////////////////////////////////////////////////////////////////////
