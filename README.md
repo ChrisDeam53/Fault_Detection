@@ -1,4 +1,4 @@
-# Fault_Detection Program.
+# Fault Detection Program.
 Author: Christopher Deam
 
 # What is the project?
