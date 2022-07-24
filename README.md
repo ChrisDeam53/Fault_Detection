@@ -58,8 +58,10 @@ You may be required to comment out any/all GTest CMake entries to allow for the 
 
 Whilst in ``Fault_Detection/PolkSystem``:
 
-``./createBuildFiles.sh`` - Runs the Polk script in DEBUG mode. Found in the /build directory.
+``./createBuildFiles.sh`` - Runs the Polk script in DEBUG mode (which can be found in the /build directory)
+
 Click ``Build`` -> Cog Icon at the bottom of VSCode screen to build the project if necessary
+
 Click ``Debug`` -> At the bottom of VSCode screen to debug the project if necessary.
 
 ``./runUnitTests.sh`` - Runs the UnitTests script found in the /build directory if necessary.
