@@ -16,7 +16,7 @@
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/build/Polk",
-        "args": [],
+        "args": ["-lgtest -pthread"],
         "stopAtEntry": false,
         "cwd": "${fileDirname}",
         "environment": [],

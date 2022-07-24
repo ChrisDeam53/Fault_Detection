@@ -4,24 +4,26 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
-
-#include <iostream>
+#include <glog/logging.h>
 
 using namespace utils;
 
 /////////////////////////////////////////////////////////////////////////////////////
-bool ImageViewer::OpenImage()
+bool ImageViewer::OpenImage(cv::Mat image)
 {
-    cv::Mat img = cv::imread("token_1.png", cv::IMREAD_COLOR);
-
-    if(img.empty())
+    if(image.empty())
     {
-        std::cout << "Could not read the image." << std::endl;
+        LOG(ERROR) << "Could not read the image.";
         return false;
     }
 
-    cv::imwrite("../../images/test.png", img);
+    image;
 
+    const std::string filePath("../src/../images/writtenImage3.png");
+    cv::imwrite(filePath, image);
+    LOG(INFO) << "Image has been written to: " << filePath;
+
+    
     return true;
 }
 /////////////////////////////////////////////////////////////////////////////////////
