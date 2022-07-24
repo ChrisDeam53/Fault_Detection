@@ -54,7 +54,8 @@ The system will then flag up and errors and faults to the User, who can then dea
 
 Start Guide:
 
-NOTE: GTest in CMake causes some issues when attempting to build the program with ``cmake ..`` and ``make``
+NOTE: GTest in CMake causes some issues when attempting to build the program with ``cmake ..`` and ``make``.
+
 You may be required to comment out any/all GTest CMake entries to allow for the build to compile.
 
 Whilst in ``Fault_Detection/PolkSystem``:
