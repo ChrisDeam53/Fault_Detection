@@ -21,10 +21,27 @@ The system will then flag up and errors and faults to the User, who can then dea
 - CMake Install Guide: https://cmake.org/install/
 - Make Install Guide: https://linuxhint.com/install-make-ubuntu/
 5) VSCode Install:
+- https://code.visualstudio.com/
 - sudo apt install g++ gdb make ninja-build rsync zip
 - sudo apt-get update
 - sudo apt-get install wget ca-certificates
-6) GLOG:
+6) VSCode Extensions Active in ``WSL:Ubuntu - Installed``:
+- C/C++
+- C/C++ Extension Pack
+- CMake
+- CMake Tools
+- Docker (Not in use)
+- Docker Compose (Not in use)
+- Docker Explorer (Not in use)
+- Doxygen Documentation Generator
+- Git Blame
+- Git Extension Pack
+- Git History
+- gitignore
+- GitLens -- Git supercharged
+- Makefile Tools
+- Open in GitHub, Bitbucket, Gitlab, VisualStudio.com !
+7) GLOG:
 - git clone https://github.com/google/glog.git
 - cd glog
 - cmake -S .-B build -G "Unix Makefiles"
@@ -36,14 +53,14 @@ The system will then flag up and errors and faults to the User, who can then dea
 # Additional Notes:
 
 Start Guide:
-NOTE: GTest in CMake causes some issues when attempting to build the program with "cmake .." and "make"
+NOTE: GTest in CMake causes some issues when attempting to build the program with ``cmake ..`` and ``make``
 You may be required to comment out any/all GTest CMake entries to allow for the build to compile.
 
 Whilst in ``Fault_Detection/PolkSystem``:
 
-./createBuildFiles.sh - Runs the Polk script in DEBUG mode. Found in the /build directory.
-Click "Build" -> Cog Icon at the bottom of VSCode screen to build the project if necessary
-Click "Debug" -> At the bottom of VSCode screen to debug the project if necessary.
+``./createBuildFiles.sh`` - Runs the Polk script in DEBUG mode. Found in the /build directory.
+Click ``Build`` -> Cog Icon at the bottom of VSCode screen to build the project if necessary
+Click ``Debug`` -> At the bottom of VSCode screen to debug the project if necessary.
 
-./runUnitTests.sh - Runs the UnitTests script found in the /build directory if necessary.
+``./runUnitTests.sh`` - Runs the UnitTests script found in the /build directory if necessary.
 
