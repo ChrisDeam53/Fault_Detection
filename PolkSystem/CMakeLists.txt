@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.0)
-project(Polk VERSION 0.1.0)
+project(Polk C CXX)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 17)
@@ -27,30 +27,31 @@ find_package (glog 0.6.0 REQUIRED)
 # Sets the main executable file. Polk. Run "./Polk" in "/build" -> To execute the binary file.
 # Currently, to execute OpenCV properly, you need to run "./Polk" in the top-level directory.
 ################################################################
-add_executable( ${PROJECT_NAME} src/main.cpp src/utils/ImageViewer.hh src/utils/ImageViewer.cpp )
+add_executable( ${PROJECT_NAME} src/main.cpp src/utils/ImageViewer.hh src/utils/ImageViewer.cc src/utils/ImageScanner.hh src/utils/ImageScanner.cc 
+                                src/viewer/ImageRequestHandler.hh src/viewer/ImageRequestHandler.cc )
 
 ################################################################
 # GTest
 ################################################################
 
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG release-1.12.1
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+# include(FetchContent)
+# FetchContent_Declare(
+#   googletest
+#   GIT_REPOSITORY https://github.com/google/googletest.git
+#   GIT_TAG release-1.12.1
+# )
+# # For Windows: Prevent overriding the parent project's compiler/linker settings
+# set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+# FetchContent_MakeAvailable(googletest)
 
-enable_testing()
+# enable_testing()
 
-add_executable(UnitTests test/ImageViewerTest.cpp src/utils/ImageViewer.hh src/utils/ImageViewer.cpp )
+# add_executable(UnitTests test/ImageViewerTest.cpp src/utils/ImageViewer.hh src/utils/ImageViewer.cpp )
 
-target_link_libraries(UnitTests ${OpenCV_LIBS} GTest::gtest_main glog::glog)
+# target_link_libraries(UnitTests ${OpenCV_LIBS} GTest::gtest_main glog::glog)
 
-include(GoogleTest)
-gtest_discover_tests(UnitTests)
+# include(GoogleTest)
+# gtest_discover_tests(UnitTests)
 
 ################################################################
 # Specifies libs.

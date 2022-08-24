@@ -6,8 +6,10 @@
 
 int main(int, char**)
 {
-    cv::Mat image = cv::imread("../images/unknown.png", cv::IMREAD_COLOR);
+    cv::Mat image = cv::imread("../images/Test_Image_2.jpg", cv::IMREAD_COLOR);
     utils::ImageViewer viewer;
     viewer.OpenImage(image);
+
+    
     return 0;
 }
