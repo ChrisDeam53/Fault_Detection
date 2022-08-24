@@ -10,12 +10,12 @@ int main(int, char**)
 {
     cv::Mat image = cv::imread("../images/Test_Image_2.jpg", cv::IMREAD_COLOR);
     utils::ImageViewer viewer;
-    utils::ImageScanner scanner;
+    utils::ImageScanner scanner(image);
 
      if(viewer.OpenImage(image))
      {
-        viewer.WriteImage(image, "Output_Test_2");
-        LOG(INFO) << "Works";
+        cv::Mat updatedImage = scanner.getImage();
+        viewer.WriteImage(updatedImage, "Output_Test_2");
      }
 
     return 0;
