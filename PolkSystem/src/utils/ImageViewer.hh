@@ -7,14 +7,26 @@ namespace utils
 {
     class ImageViewer
     {
+        ////////////////////////////////////////////////////////////////////////////////////
+        /// @brief Open and deal with images.      
+        ////////////////////////////////////////////////////////////////////////////////////
+        
         public:
         /////////////////////////////////////////////////////////////////////////////////////
         /// @author Christopher Deam.
-        /// @brief Reads an image that is supplied & writes the image into "/images".
+        /// @brief Reads an image that is supplied.
         /// @param image - OpenCV matrix object. Image to be passed in from "/images".
         /// @return True if image can be opened.
         /////////////////////////////////////////////////////////////////////////////////////
         bool OpenImage(cv::Mat image); 
+
+        /////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
+        /// @brief Writes an image into "/images".
+        /// @param image - OpenCV matrix object. Image to be passed in from "/images".
+        /// @param imageName - Name supplied for image.
+        /////////////////////////////////////////////////////////////////////////////////////
+        void WriteImage(cv::Mat image, const std::string imageName);
 
         private:
     };
