@@ -30,13 +30,21 @@ namespace utils
 
         ////////////////////////////////////////////////////////////////////////////////////
         /// @brief Coverts normal RGB image supplied into HSV.
+        /// @note Method exists in anticipation that more steps may be required.
         /// @param inputImage - OpenCV matrix object.
         ////////////////////////////////////////////////////////////////////////////////////
-        void CovertImageToHsv(cv::Mat image);
+        void ConvertImageToHsv(cv::Mat image);
+
+        ////////////////////////////////////////////////////////////////////////////////////
+        /// @brief Converts the supplied HSV image into the original state (RGB).
+        /// @note Method exists in anticipation that more steps may be required.
+        /// @param inputImage - OpenCV matrix object.
+        ////////////////////////////////////////////////////////////////////////////////////
+        void ConvertImageToRgb(cv::Mat image);
 
         ////////////////////////////////////////////////////////////////////////////////////
         /// @brief Returns the updated image matrix.
-        /// @return inputImage - OpenCV matrix object.
+        /// @return scannedImage - OpenCV matrix object.
         ////////////////////////////////////////////////////////////////////////////////////
         cv::Mat getImage()
         {
@@ -68,17 +76,6 @@ namespace utils
         /// @note 255 is returned from FindHsvValues if the colour is in range, 0 if it is not.
         ////////////////////////////////////////////////////////////////////////////////////
         cv::Mat GetHsvPixelLocation(cv::Mat hsvImage);
-
-        ////////////////////////////////////////////////////////////////////////////////////
-        /// @brief Uses OpenCV's Geometric Drawing method.
-        /// @param image - Image supplied to be drawn over.
-        /// @param startPoint - 2D x,y start point supplied.
-        /// @param endPoint - 2D x,y end point supplied.
-        /// @param lineColour - Line colour.
-        /// @param thickness - Line thickness.
-        ////////////////////////////////////////////////////////////////////////////////////
-        void drawOnImage(cv::Mat image, cv::Point startPoint, cv::Point endPoint, cv::Scalar lineColour, int thickness);
-
     };
 
 }
