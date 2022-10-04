@@ -46,11 +46,12 @@ namespace utils
         private:
         cv::Mat inputImage;
         cv::Mat scannedImage;
+        cv::Mat nonZeroCoordinates;
 
         /// Threshold values - Allowing for a range of HSV values to encompass a the colour range.
-        // Hue, Saturation, Value.
-        const cv::Scalar HSVLowerValue; // Original: 0,0,38
-        const cv::Scalar HSVUpperValue; // Original: 0,0, 75
+        /// Hue, Saturation, Value.
+        const cv::Scalar HSVLowerValue; // Original: 0,0,38 - Dark Grey
+        const cv::Scalar HSVUpperValue; // Original: 0,0, 75 - Light Grey
 
         ////////////////////////////////////////////////////////////////////////////////////
         /// @brief Used to find the HSV values for bolts within the image.
@@ -59,7 +60,25 @@ namespace utils
         /// @param HSVUpperValue - CV Scalar object - 4-element vector containing the HSV upper bounds.
         ////////////////////////////////////////////////////////////////////////////////////
         cv::Mat FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowerValue, const cv::Scalar HSVUpperValue);
-        
+
+        ////////////////////////////////////////////////////////////////////////////////////
+        /// @brief Method to draw & outline specific areas on the returned image.
+        /// @param hsvImage - OpenCV matrix object.
+        /// @note Will want to get coordinates of white pixels: https://stackoverflow.com/questions/34978705/get-coordinates-of-white-pixels-opencv
+        /// @note 255 is returned from FindHsvValues if the colour is in range, 0 if it is not.
+        ////////////////////////////////////////////////////////////////////////////////////
+        cv::Mat GetHsvPixelLocation(cv::Mat hsvImage);
+
+        ////////////////////////////////////////////////////////////////////////////////////
+        /// @brief Uses OpenCV's Geometric Drawing method.
+        /// @param image - Image supplied to be drawn over.
+        /// @param startPoint - 2D x,y start point supplied.
+        /// @param endPoint - 2D x,y end point supplied.
+        /// @param lineColour - Line colour.
+        /// @param thickness - Line thickness.
+        ////////////////////////////////////////////////////////////////////////////////////
+        void drawOnImage(cv::Mat image, cv::Point startPoint, cv::Point endPoint, cv::Scalar lineColour, int thickness);
+
     };
 
 }
