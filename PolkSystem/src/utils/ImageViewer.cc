@@ -25,7 +25,7 @@ bool ImageViewer::OpenImage(cv::Mat image)
 
     return true;
 }
-/////////////////////////////////////////////////////////////////////////////////////
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 void ImageViewer::WriteImage(cv::Mat image, const std::string imageName)
@@ -33,8 +33,7 @@ void ImageViewer::WriteImage(cv::Mat image, const std::string imageName)
     const std::string imageFilePath("../src/../images/scannedImages/");
     const std::string imageExtension(".jpg");
     const std::string imageSaveLocation = imageFilePath + imageName + imageExtension;
-
+    
     cv::imwrite(imageSaveLocation, image);
-    LOG(INFO) << "Image has been written to: " << imageFilePath;
+    LOG(INFO) << "Image has been written to: " << imageFilePath << imageName << imageExtension;
 }
-/////////////////////////////////////////////////////////////////////////////////////
