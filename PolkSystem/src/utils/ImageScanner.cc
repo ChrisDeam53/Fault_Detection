@@ -18,40 +18,27 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
     cv::Mat returningImage;
     cv::Mat tempImage = inputImage;
 
-    // OG
     // Check if elements lie within the HSV ranges.
     cv::inRange(inputImage, HSVLowerValue, HSVUpperValue, returningImage);
 
     cv::Mat separateChannels[3];
 
-    // cv::split(inputImage, separateChannels);
     cv::split(inputImage, separateChannels);
 
     cv::Mat hueChannel = separateChannels[0];
     cv::Mat saturationChannel = separateChannels[1];
     cv::Mat valueChannel = separateChannels[2];
 
-    // HSVLowerValue{39,46.8,35.3}, HSVUpperValue{30,31.2,37.6}
-    // WOOD BROWN
-    // 30 | 39
-    // {0, 0, 30}
-    // {0, 0, 39}
     cv::Scalar(0, 0, 30);
     cv::Scalar(0, 0, 39);
     const float channelOneMin = 0.037;
     const float channelOneMax = 0.037;
 
-    // 31.2 | 46.8
-    // {0, 31.2, 0}
-    // {0, 46.8, 0}
     cv::Scalar(0, 31.2, 0);
     cv::Scalar(0, 46.8, 0);
     const float channelTwoMin = 0.175;
     const float channelTwoMax = 0.543;
 
-    // 37.6 | 35.3
-    // {0, 0, 37.6}
-    // {0, 0, 35.3}
     cv::Scalar(0, 0, 37.6);
     cv::Scalar(0, 0, 35.3);
     const float channelThreeMin = 0.343;
@@ -74,9 +61,6 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
 
     cv::Mat nonZeroCoords = GetHsvPixelLocation(combinedChannels);
 
-    // OG
-    // cv::Mat nonZeroCoords = GetHsvPixelLocation(returningImage);
-
     // Uncomment when required
     // for(int i = 0; i < nonZeroCoords.total(); i++)
     // {
@@ -98,9 +82,8 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
 
     cv::Mat testingBitwiseAnd;
 
-    // May need to convert the mask into a 3 channel image as the original image is a 3 channel image.
+    // Need to convert the mask into a 3 channel image as the original image is a 3 channel image.
     cv::Mat convertedMat;
-
     cv::cvtColor(testImage3, convertedMat, cv::COLOR_GRAY2BGR, 3);
 
     LOG(INFO) << "";
@@ -118,33 +101,25 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
     // Output_Test_32_Morphology
     // DetectBoltCircles(edgeMat);
 
-    // return testImage;
-    // return testImage2;
-    // return testImage3;
-
-    // return testImage3;
-
-    // return testingBitwiseAnd;
-
-    // return edgeMat;
-    // return zerosMatrix;
-    // return DetectBoltCircles(edgeMat);
-
-    // Use testImage2 as a mask also perhaps
     cv::Mat newMaskMat;
-    // cv::bitwise_and(testImage2, DetectBoltCircles(edgeMat), newMaskMat);
     cv::bitwise_and(testImage2, edgeMat, newMaskMat);
-    // return newMaskMat;
-    cv::Mat TEMPY;
-    TEMPY = DetectBoltCircles(newMaskMat);
-    LOG(INFO) << "Number of channels in TEMPY: " << TEMPY.channels();
 
-    cv::Mat rgb_img;
-    cv::cvtColor(TEMPY, rgb_img, cv::COLOR_GRAY2BGR, 3);
-    // return TEMPY;
-    cv::Mat plsWork;
-    cv::bitwise_and(inputImage, rgb_img, plsWork);
-    return plsWork;
+    cv::Mat circlesMatrix;
+    circlesMatrix = DetectBoltCircles(newMaskMat);
+    LOG(INFO) << "Number of channels in circlesMatrix: " << circlesMatrix.channels();
+
+    cv::Mat rgbImageMatrix;
+    cv::cvtColor(circlesMatrix, rgbImageMatrix, cv::COLOR_GRAY2BGR, 3);
+
+    // Covert all white contour lines to green.
+    cv::Mat whiteToGreenMask;
+    cv::inRange(rgbImageMatrix, cv::Scalar(255, 255, 255), cv::Scalar(255, 255, 255), whiteToGreenMask);
+    rgbImageMatrix.setTo(cv::Scalar(0, 255, 0), whiteToGreenMask);
+
+    // Impose the Green circles mask atop the original image.
+    cv::Mat detectedBoltsMatrix;
+    cv::bitwise_or(inputImage, rgbImageMatrix, detectedBoltsMatrix);
+    return detectedBoltsMatrix;
 }
 
 
@@ -287,6 +262,10 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
     cv::HoughCircles(circlesMatrix, circles, cv::HOUGH_GRADIENT, 1, 60, 200, 20, 0, 0);
 
     LOG(INFO) << "--eeee- circles.size() " << circles.size();
+
+    // NOTE:
+    // Code below inspired by: https://stackoverflow.com/questions/20698613/detect-semicircle-in-opencv
+    // Answered by: Micka, Dec 20, 2013 at 14:43.
     for(size_t i = 0; i < circles.size(); i++)
     {
         // Draw on inputImage to draw atop original image.
@@ -296,9 +275,9 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
         cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
         int radius = cvRound(circles[i][2]);
         // Draw the circle center
-        cv::circle(circlesMatrix, center, 3, cv::Scalar(255,255,255), -1, 8, 0 );
+        cv::circle(circlesMatrix, center, 3, cv::Scalar(255,0,0), -1, 8, 0 );
         // Draw the circle outline
-        cv::circle(circlesMatrix, center, radius, cv::Scalar(255,255,255), 3, 8, 0 );
+        cv::circle(circlesMatrix, center, radius, cv::Scalar(255,0,0), 3, 8, 0 );
     }
 
     ///////////////////////////////////
@@ -338,12 +317,12 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
             if(dt.at<float>(cY,cX) < maxInlierDist) 
             {
                 inlier++;
-                cv::circle(cv::Scalar(255,255,255), cv::Point2i(cX,cY),3, cv::Scalar(255,255,255));
+                cv::circle(cv::Scalar(255,0,0), cv::Point2i(cX,cY),3, cv::Scalar(255,0,0));
                 // Green: 0, 255, 0
             } 
             else
             {
-                cv::circle(cv::Scalar(255,255,255), cv::Point2i(cX,cY),3, cv::Scalar(255,255,255));
+                cv::circle(cv::Scalar(255,0,0), cv::Point2i(cX,cY),3, cv::Scalar(255,0,0));
                 // Green: 0, 255, 0
             }
         }
