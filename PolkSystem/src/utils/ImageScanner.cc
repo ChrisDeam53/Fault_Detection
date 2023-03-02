@@ -5,6 +5,18 @@
 #include <glog/logging.h>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/fast_math.hpp>
+#include <vector>
+
+// Temp imread:
+#include <opencv2/imgcodecs.hpp>
+// Temp cv::TermCriteria
+#include <opencv2/core/types.hpp>
+
+// Temp CV_32FC2
+#include <opencv2/core/hal/interface.h>
+
+// Will need to eventually remove for MIN
+#include <opencv2/core/cvdef.h>
 
 using namespace utils;
 
@@ -73,36 +85,33 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
     LOG(INFO) << "Number of channels in inputImage: " << inputImage.channels();
     LOG(INFO) << "Number of channels in outputImage: " << tempImage.channels();
 
-    cv::Mat testImage = SegmentImageColours(tempImage, inputImage);
+    cv::Mat segmentColoursMat = SegmentImageColours(tempImage, inputImage);
 
-    cv::Mat testImage2 = ApplyEdgeDetection(inputImage);
+    cv::Mat edgeDetectionMat = ApplyEdgeDetection(inputImage);
 
     // Returns the tresholded image - The wooden blocks are white.
-    cv::Mat testImage3 = ThresholdWoodenShape(inputImage);
+    cv::Mat thresholdMat = ThresholdWoodenShape(inputImage);
 
-    cv::Mat testingBitwiseAnd;
+    cv::Mat bitwiseAndMat;
 
     // Need to convert the mask into a 3 channel image as the original image is a 3 channel image.
     cv::Mat convertedMat;
-    cv::cvtColor(testImage3, convertedMat, cv::COLOR_GRAY2BGR, 3);
+    cv::cvtColor(thresholdMat, convertedMat, cv::COLOR_GRAY2BGR, 3);
 
     LOG(INFO) << "";
     LOG(INFO) << "";
-    LOG(INFO) << "Number of channels in testImage3: " << testImage3.channels();
+    LOG(INFO) << "Number of channels in thresholdMat: " << thresholdMat.channels();
     LOG(INFO) << "Number of channels in inputImage: " << inputImage.channels();
     LOG(INFO) << "Number of channels in convertedMat: " << convertedMat.channels();
 
     // Applies the mask atop the original image.
     ConvertImageToRgb(inputImage);
-    cv::bitwise_and(inputImage, convertedMat, testingBitwiseAnd);
+    cv::bitwise_and(inputImage, convertedMat, bitwiseAndMat);
 
-    cv::Mat edgeMat = ApplyEdgeDetection(testingBitwiseAnd);
-
-    // Output_Test_32_Morphology
-    // DetectBoltCircles(edgeMat);
+    cv::Mat edgeMat = ApplyEdgeDetection(bitwiseAndMat);
 
     cv::Mat newMaskMat;
-    cv::bitwise_and(testImage2, edgeMat, newMaskMat);
+    cv::bitwise_and(edgeDetectionMat, edgeMat, newMaskMat);
 
     cv::Mat circlesMatrix;
     circlesMatrix = DetectBoltCircles(newMaskMat);
@@ -120,6 +129,19 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
     cv::Mat detectedBoltsMatrix;
     cv::bitwise_or(inputImage, rgbImageMatrix, detectedBoltsMatrix);
     return detectedBoltsMatrix;
+
+    // cv::Mat kMeansMat;
+    // kMeansMat = ApplyKMeansAlgorithm(inputImage);
+    // return kMeansMat;
+
+    // Temp testing
+    // cv::Mat appliedTemplateMat;
+    // // appliedTemplateMat = ApplyTemplate(bitwiseAndMat);
+    // appliedTemplateMat = ApplyTemplate(inputImage);
+    // return appliedTemplateMat;
+
+    // Returns only the circles on black background. (Green Circles)
+    // return rgbImageMatrix;
 }
 
 
@@ -192,18 +214,9 @@ cv::Mat ImageScanner::ApplyEdgeDetection(cv::Mat hsvImage)
     // cv::Mat to return with canny Edge applied.
     cv::Mat cannyEdgeImage;
 
-    // Image 14 -> 100,200,3,false
-    // Image 15 -> 100,200,3,true
-    // Image 16 -> 150,200,3,false
-    // Image 17 -> 350,400,3,false -> Does not show wooden blocks
-    // Image 18 -> 450,500,3,false
-    // Image 19 -> 450,500,3,false
-    // Image 20 -> 450,500,3,true
-
-    // OG
-    // cv::Canny(hsvImage, cannyEdgeImage, 650, 700, 3, true);
-
-    cv::Canny(hsvImage, cannyEdgeImage, 550, 700, 3, true);
+    // OG:
+    // cv::Canny(hsvImage, cannyEdgeImage, 550, 700, 3, true);
+    cv::Canny(hsvImage, cannyEdgeImage, 400, 700, 3, true);
 
     return cannyEdgeImage;
 }
@@ -256,6 +269,9 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
 
     cv::cvtColor(zerosMatrix, circlesMatrix, cv::COLOR_BGR2GRAY, 1);
 
+    // MEDIAN BLUR
+    // cv::medianBlur(circlesMatrix, circlesMatrix, 3);
+
     // smooth it, otherwise a lot of false circles may be detected
     cv::GaussianBlur(circlesMatrix, circlesMatrix, cv::Size(9, 9), 2, 2);
 
@@ -277,7 +293,7 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
         // Draw the circle center
         cv::circle(circlesMatrix, center, 3, cv::Scalar(255,0,0), -1, 8, 0 );
         // Draw the circle outline
-        cv::circle(circlesMatrix, center, radius, cv::Scalar(255,0,0), 3, 8, 0 );
+        cv::circle(circlesMatrix, center, radius, cv::Scalar(255,0,0), 5, 8, 0 );
     }
 
     ///////////////////////////////////
@@ -330,4 +346,180 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
     }
 
     return circlesMatrix;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+cv::Mat ImageScanner::ApplyTemplate(cv::Mat rgbImage)
+{
+    // Notes:
+    // UPDATE:
+    // Perhaps have this method reutrn a CV::POINT
+    // Then these are drawn in the constructor
+    // Apply the scalar in the contructor too
+
+    // UPDATE2:
+    // OR I could get a vector of templates
+    // Loop through each one, appent the points to that vector
+    // Then loop through that vector and draw all rectangles
+
+    const cv::Mat bolt01 = cv::imread("../images/Bolt_VER_1.PNG", cv::IMREAD_COLOR);
+    const cv::Mat bolt02 = cv::imread("../images/Bolt_VER_2.PNG", cv::IMREAD_COLOR);
+    const cv::Mat bolt03 = cv::imread("../images/Bolt_VER_3.PNG", cv::IMREAD_COLOR);
+    const cv::Mat bolt04 = cv::imread("../images/Bolt_VER_4.PNG", cv::IMREAD_COLOR);
+
+    cv::Mat imageArray[4];
+    std::vector<cv::Point> pointsVector;
+    
+    cv::Mat greyscaleBolt01;
+    cv::Mat greyscaleBolt02;
+    cv::Mat greyscaleBolt03;
+    cv::Mat greyscaleBolt04;
+
+    cv::cvtColor(bolt01, greyscaleBolt01, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(bolt02, greyscaleBolt02, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(bolt03, greyscaleBolt03, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(bolt04, greyscaleBolt04, cv::COLOR_BGR2GRAY);
+
+    imageArray[0] = greyscaleBolt01;
+    imageArray[1] = greyscaleBolt02;
+    imageArray[2] = greyscaleBolt03;
+    imageArray[3] = greyscaleBolt04;
+
+    cv::Mat matchingResultTemplate;
+    cv::Mat greyscaleImage;
+
+    double minVal;
+    double maxVal;
+    cv::Point minLocation;
+    cv::Point maxLocation;
+    cv::Point matchLocation;
+    int columns =  rgbImage.cols - greyscaleBolt04.cols + 30;
+    int rows = rgbImage.rows - greyscaleBolt04.rows + 30;
+
+    cv::cvtColor(rgbImage, greyscaleImage, cv::COLOR_BGR2GRAY);
+
+    LOG(INFO) << "rgbImage: " <<  rgbImage.depth();
+    LOG(INFO) << "greyscaleImage: " <<  greyscaleImage.depth();
+    LOG(INFO) << "matchingResultTemplate: " <<  matchingResultTemplate.depth();
+
+    // OG
+    // cv::matchTemplate(greyscaleImage, greyscaleBolt04, matchingResultTemplate, cv::TM_SQDIFF, cv::noArray());
+
+    cv::matchTemplate(greyscaleImage, greyscaleBolt03, matchingResultTemplate, cv::TM_CCOEFF_NORMED, cv::noArray());
+
+    cv::normalize(matchingResultTemplate, matchingResultTemplate, 0, 1, cv::NORM_MINMAX, -1, cv::Mat());
+
+    cv::minMaxLoc(matchingResultTemplate, &minVal, &maxVal, &minLocation, &maxLocation, cv::noArray());
+
+    // If using: cv::TM_SQDIFF or cv::TM_SQDIFF_NORMED 
+    // matchLocation = minLocation;
+    
+    matchLocation = maxLocation;
+
+    cv::rectangle(greyscaleImage, matchLocation, cv::Point(matchLocation.x + greyscaleBolt03.cols , matchLocation.y + greyscaleBolt03.rows), cv::Scalar::all(0), 2, 8, 0);
+
+    cv::rectangle(matchingResultTemplate, matchLocation, cv::Point(matchLocation.x, matchLocation.y), cv::Scalar::all(0), 2, 8, 0);
+
+    return greyscaleImage;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+cv::Mat ImageScanner::ApplyKMeansAlgorithm(cv::Mat rgbImage)
+{
+    // https://docs.opencv.org/3.4/d1/d5c/tutorial_py_kmeans_opencv.html
+    // https://docs.opencv.org/3.4/d5/d38/group__core__cluster.html#ga9a34dc06c6ec9460e90860f15bcd2f88
+
+
+    cv::Mat labels;
+    double compactness;
+
+    cv::Scalar colourTab[] =
+    {
+        cv::Scalar(0, 0, 255),
+        cv::Scalar(0,255,0),
+        cv::Scalar(255,100,100),
+        cv::Scalar(255,0,255),
+        cv::Scalar(0,255,255)
+    };
+
+    std::vector<cv::Point2f> centers;
+
+    cv::Mat matPoints(50, 1, CV_32FC2);
+
+    // compactness = cv::kmeans(matPoints, 4, labels, cv::TermCriteria(cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 10, 1.0), 3, cv::KMEANS_USE_INITIAL_LABELS, centers);
+
+    compactness = cv::kmeans(matPoints, 4, labels, cv::TermCriteria(cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 10, 1.0), 30, cv::KMEANS_PP_CENTERS , cv::noArray());
+
+    // May need to comment out:
+    rgbImage = cv::Scalar::all(0);
+
+    for (int i = 0; i < centers.size(); i++)
+    {
+        cv::Point2f centre = centers[i];
+        cv::circle(rgbImage, centre, 40, colourTab[i], 1, cv::LINE_AA);
+    }
+    
+    return rgbImage;
+
+
+    /////////////////////////////////////////////////////
+
+    // const int MAX_CLUSTERS = 5;
+    // cv::Scalar colorTab[] =
+    // {
+    //     cv::Scalar(0, 0, 255),
+    //     cv::Scalar(0,255,0),
+    //     cv::Scalar(255,100,100),
+    //     cv::Scalar(255,0,255),
+    //     cv::Scalar(0,255,255)
+    // };
+    // cv::Mat img(500, 500, CV_8UC3);
+    // cv::RNG rng(12345);
+
+    // int k, clusterCount = rng.uniform(2, MAX_CLUSTERS+1);
+    // int i, sampleCount = rng.uniform(1, 1001);
+    // cv::Mat points(sampleCount, 1, CV_32FC2), labels;
+
+    // clusterCount = MIN(clusterCount, sampleCount);
+
+
+
+    // std::vector<cv::Point2f> centers;
+    // /* generate random sample from multigaussian distribution */
+    // for( k = 0; k < clusterCount; k++ )
+    // {
+    //     cv::Point center;
+    //     center.x = rng.uniform(0, img.cols);
+    //     center.y = rng.uniform(0, img.rows);
+    //     cv::Mat pointChunk = points.rowRange(k*sampleCount/clusterCount,
+    //                                         k == clusterCount - 1 ? sampleCount :
+    //                                         (k+1)*sampleCount/clusterCount);
+    //     rng.fill(pointChunk, cv::RNG::NORMAL, cv::Scalar(center.x, center.y), cv::Scalar(img.cols*0.05, img.rows*0.05));
+    // }
+    // cv::randShuffle(points, 1, &rng);
+    
+    // double compactness = kmeans(points, clusterCount, labels,
+    //     cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 10, 1.0),
+    //         3, cv::KMEANS_PP_CENTERS, centers);
+
+    // img = cv::Scalar::all(0);
+
+    // for(int i = 0; i < sampleCount; i++)
+    // {
+    //     int clusterIdx = labels.at<int>(i);
+    //     cv::Point ipt = points.at<cv::Point2f>(i);
+    //     cv::circle( img, ipt, 2, colorTab[clusterIdx], cv::FILLED, cv::LINE_AA );
+    // }
+
+    // for (int i = 0; i < (int)centers.size(); ++i)
+    // {
+    //     cv::Point2f c = centers[i];
+    //     circle( img, c, 40, colorTab[i], 1, cv::LINE_AA );
+    // }
+
+
+    // return img;
+
 }
