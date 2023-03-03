@@ -136,12 +136,14 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
 
     // Temp testing
     // cv::Mat appliedTemplateMat;
-    // // appliedTemplateMat = ApplyTemplate(bitwiseAndMat);
+    // appliedTemplateMat = ApplyTemplate(bitwiseAndMat);
     // appliedTemplateMat = ApplyTemplate(inputImage);
     // return appliedTemplateMat;
 
     // Returns only the circles on black background. (Green Circles)
     // return rgbImageMatrix;
+
+    // return edgeMat;
 }
 
 
@@ -214,8 +216,6 @@ cv::Mat ImageScanner::ApplyEdgeDetection(cv::Mat hsvImage)
     // cv::Mat to return with canny Edge applied.
     cv::Mat cannyEdgeImage;
 
-    // OG:
-    // cv::Canny(hsvImage, cannyEdgeImage, 550, 700, 3, true);
     cv::Canny(hsvImage, cannyEdgeImage, 400, 700, 3, true);
 
     return cannyEdgeImage;
@@ -261,6 +261,11 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
     cv::Mat circlesMatrix;
     std::vector<cv::Vec3f> circles;
 
+    const std::string TOP_LEFT("Top Left");
+    const std::string TOP_RIGHT("Top Right");
+    const std::string BOTTOM_LEFT("Bottom Left");
+    const std::string BOTTOM_RIGHT("Bottom Right");
+
     cv::findContours(edgeMat, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
 
     cv::Mat zerosMatrix = cv::Mat::zeros(edgeMat.rows, edgeMat.cols, CV_8UC3);
@@ -272,12 +277,18 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
     // MEDIAN BLUR
     // cv::medianBlur(circlesMatrix, circlesMatrix, 3);
 
-    // smooth it, otherwise a lot of false circles may be detected
+    // Smooth the image - Prevent false circles detection.
     cv::GaussianBlur(circlesMatrix, circlesMatrix, cv::Size(9, 9), 2, 2);
 
+    // Apply HoughCircles to find circles.
     cv::HoughCircles(circlesMatrix, circles, cv::HOUGH_GRADIENT, 1, 60, 200, 20, 0, 0);
 
     LOG(INFO) << "--eeee- circles.size() " << circles.size();
+
+    const int imageWidth = circlesMatrix.cols;
+    const int imageHeight = circlesMatrix.rows;
+    LOG(INFO) << "Width : " << imageWidth;
+    LOG(INFO) << "Height: " << imageHeight;
 
     // NOTE:
     // Code below inspired by: https://stackoverflow.com/questions/20698613/detect-semicircle-in-opencv
@@ -294,6 +305,49 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
         cv::circle(circlesMatrix, center, 3, cv::Scalar(255,0,0), -1, 8, 0 );
         // Draw the circle outline
         cv::circle(circlesMatrix, center, radius, cv::Scalar(255,0,0), 5, 8, 0 );
+
+        // If x < 1/2 of imageWidth = Left 
+        // If x > 1/2 of imageWidth = Right
+        // If y < 1/2 of imageHeight = Top
+        // If y < 1/2 of imageHeight = Bottom
+
+        if(circles[i][0] < (imageWidth / 2))
+        {
+            // Left
+            if(circles[i][1] < (imageHeight / 1.5))
+            {
+                // Top
+                cv::Point textPoint(circles[i][0], circles[i][1]+100);
+                cv::putText(circlesMatrix, TOP_LEFT, textPoint, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 255, 255), 5);
+            }
+            else
+            {
+                // Bottom
+                cv::Point textPoint(circles[i][0], circles[i][1]+100);
+                cv::putText(circlesMatrix, BOTTOM_LEFT, textPoint, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 255, 255), 5);
+            }
+ 
+        }
+        else
+        {
+            // Right
+            if(circles[i][1] < (imageHeight / 1.5))
+            {
+                // Top
+                cv::Point textPoint(circles[i][0], circles[i][1]+100);
+                cv::putText(circlesMatrix, TOP_RIGHT, textPoint, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 255, 255), 5);
+            }
+            else
+            {
+                // Bottom
+                cv::Point textPoint(circles[i][0], circles[i][1]+100);
+                cv::putText(circlesMatrix, BOTTOM_RIGHT, textPoint, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 255, 255), 5);
+            }
+        }
+
+
+        // Draw text to show *which* bolt has been detected.
+        
     }
 
     ///////////////////////////////////
