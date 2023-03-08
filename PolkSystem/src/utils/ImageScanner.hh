@@ -15,11 +15,13 @@ namespace utils
         public:
 
         ////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
         /// @brief Default constructor.
         ////////////////////////////////////////////////////////////////////////////////////
         ImageScanner() = default;
 
         ////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
         /// @brief ImageScanner constructor. 
         /// @param image - OpenCV matrix object | The image to be checked.
         ////////////////////////////////////////////////////////////////////////////////////
@@ -32,6 +34,7 @@ namespace utils
         };
 
         ////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
         /// @brief Coverts normal RGB image supplied into HSV.
         /// @note Method exists in anticipation that more steps may be required.
         /// @param inputImage - OpenCV matrix object.
@@ -39,6 +42,7 @@ namespace utils
         void ConvertImageToHsv(cv::Mat image);
 
         ////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
         /// @brief Converts the supplied HSV image into the original state (RGB).
         /// @note Method exists in anticipation that more steps may be required.
         /// @param inputImage - OpenCV matrix object.
@@ -46,6 +50,7 @@ namespace utils
         void ConvertImageToRgb(cv::Mat image);
 
         ////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
         /// @brief Returns the updated image matrix.
         /// @return scannedImage - OpenCV matrix object.
         ////////////////////////////////////////////////////////////////////////////////////
@@ -85,6 +90,7 @@ namespace utils
         // Gray      rgb(128,128,128) -> hsv(0, 0, 50.2)
 
         ////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
         /// @brief Used to find the HSV values for bolts within the image.
         /// @param inputImage - OpenCV matrix object.
         /// @param HSVLowerValue - CV Scalar object - 4-element vector containing the HSV lower bounds.
@@ -93,6 +99,7 @@ namespace utils
         cv::Mat FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowerValue, const cv::Scalar HSVUpperValue);
 
         ////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
         /// @brief Method to draw & outline specific areas on the returned image.
         /// @param hsvImage - OpenCV matrix object - HSV Image.
         /// @note Will want to get coordinates of white pixels: https://stackoverflow.com/questions/34978705/get-coordinates-of-white-pixels-opencv
@@ -101,44 +108,58 @@ namespace utils
         cv::Mat GetHsvPixelLocation(cv::Mat hsvImage);
 
         ////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
         /// @brief Returns the updated image matrix.
         /// @param hsvImage - OpenCV matrix object.
         ////////////////////////////////////////////////////////////////////////////////////
         cv::Mat SegmentImageColours(cv::Mat colourImage, cv::Mat hsvImage);
 
         ////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
         /// @brief Applies edge-detection algorithms.
         /// @param hsvImage - OpenCV matrix object a containing a HSV image.
         ////////////////////////////////////////////////////////////////////////////////////
         cv::Mat ApplyEdgeDetection(cv::Mat hsvImage);
 
         ////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
         /// @brief Applies edge-detection algorithms - Attempts to detect the shape.
         /// @param hsvImage - OpenCV matrix object a containing an RGB image.
         ////////////////////////////////////////////////////////////////////////////////////
         cv::Mat ThresholdWoodenShape(cv::Mat rgbImage);
 
         ////////////////////////////////////////////////////////////////////////////////////
-        /// @brief 
-        /// @param hsvImage - 
+        /// @author Christopher Deam.
+        /// @brief Applies erosion against the image, removing noise along the edges.
+        /// @param hsvImage - OpenCV matrix object containing a HSV image.
         ////////////////////////////////////////////////////////////////////////////////////
         cv::Mat ApplyErosion(cv::Mat inputImage);
 
         ////////////////////////////////////////////////////////////////////////////////////
-        /// @brief 
-        /// @param hsvImage - 
+        /// @author Christopher Deam.
+        /// @brief Applies HoughCircles algorithm on edges that are assumed to be circles.
+        /// @param edgeMat - OpenCV matrix object containing a binary image.
         ////////////////////////////////////////////////////////////////////////////////////
         cv::Mat DetectBoltCircles(cv::Mat edgeMat);
 
         ////////////////////////////////////////////////////////////////////////////////////
-        /// @brief 
-        /// @param hsvImage - 
+        /// @author Christopher Deam.
+        /// @brief Applies HoughCircles algorithm on edges that are assumed to be circles.
+        /// @param rgbMat - OpenCV matrix object containing an RGB image with reduced ROI.
+        ////////////////////////////////////////////////////////////////////////////////////
+        cv::Mat DetectMissingBoltCircles(cv::Mat rgbMat);
+
+        ////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
+        /// @brief Applies Template Matching against bolts in an image.
+        /// @param hsvImage - OpenCV matrix object containing a HSV image.
         ////////////////////////////////////////////////////////////////////////////////////
         cv::Mat ApplyTemplate(cv::Mat rgbImage);
 
         ////////////////////////////////////////////////////////////////////////////////////
-        /// @brief 
-        /// @param hsvImage - 
+        /// @author Christopher Deam.
+        /// @brief Applies the K-Means Algorithm against the image to reduce ROI.
+        /// @param hsvImage - OpenCV matrix object containing a HSV image.
         ////////////////////////////////////////////////////////////////////////////////////
         cv::Mat ApplyKMeansAlgorithm(cv::Mat rgbImage);
     };

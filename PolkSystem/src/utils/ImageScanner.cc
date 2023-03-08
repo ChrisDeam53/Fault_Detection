@@ -68,9 +68,6 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
     cv::Mat combinedChannels;
     cv::merge(hsvChannels, 1, combinedChannels);
 
-    LOG(INFO) << "Number of channels in combinedChannels: " << combinedChannels.channels();
-    LOG(INFO) << "Number of channels in returningImage: " << returningImage.channels();
-
     cv::Mat nonZeroCoords = GetHsvPixelLocation(combinedChannels);
 
     // Uncomment when required
@@ -80,10 +77,6 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
     //     cv::Point tempPoint(nonZeroCoords.at<cv::Point>(i).x, nonZeroCoords.at<cv::Point>(i).y);
     //     cv::circle(tempImage, tempPoint, 10, cv::Scalar(255,0,0), 1);
     // }
-
-    LOG(INFO) << "Number of channels in testing: " << nonZeroCoords.channels();
-    LOG(INFO) << "Number of channels in inputImage: " << inputImage.channels();
-    LOG(INFO) << "Number of channels in outputImage: " << tempImage.channels();
 
     cv::Mat segmentColoursMat = SegmentImageColours(tempImage, inputImage);
 
@@ -98,12 +91,6 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
     cv::Mat convertedMat;
     cv::cvtColor(thresholdMat, convertedMat, cv::COLOR_GRAY2BGR, 3);
 
-    LOG(INFO) << "";
-    LOG(INFO) << "";
-    LOG(INFO) << "Number of channels in thresholdMat: " << thresholdMat.channels();
-    LOG(INFO) << "Number of channels in inputImage: " << inputImage.channels();
-    LOG(INFO) << "Number of channels in convertedMat: " << convertedMat.channels();
-
     // Applies the mask atop the original image.
     ConvertImageToRgb(inputImage);
     cv::bitwise_and(inputImage, convertedMat, bitwiseAndMat);
@@ -115,7 +102,6 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
 
     cv::Mat circlesMatrix;
     circlesMatrix = DetectBoltCircles(newMaskMat);
-    LOG(INFO) << "Number of channels in circlesMatrix: " << circlesMatrix.channels();
 
     cv::Mat rgbImageMatrix;
     cv::cvtColor(circlesMatrix, rgbImageMatrix, cv::COLOR_GRAY2BGR, 3);
@@ -128,22 +114,54 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
     // Impose the Green circles mask atop the original image.
     cv::Mat detectedBoltsMatrix;
     cv::bitwise_or(inputImage, rgbImageMatrix, detectedBoltsMatrix);
-    return detectedBoltsMatrix;
+    // return detectedBoltsMatrix;
 
-    // cv::Mat kMeansMat;
-    // kMeansMat = ApplyKMeansAlgorithm(inputImage);
+    // TESTING ONWARDS:
+    cv::Mat colourSegmentMat;
+    colourSegmentMat = SegmentImageColours(bitwiseAndMat, bitwiseAndMat);
+    // return colourSegmentMat;
+
+    // Works:
+    cv::Mat kMeansMat;
+    kMeansMat = ApplyKMeansAlgorithm(bitwiseAndMat);
     // return kMeansMat;
 
-    // Temp testing
-    // cv::Mat appliedTemplateMat;
-    // appliedTemplateMat = ApplyTemplate(bitwiseAndMat);
-    // appliedTemplateMat = ApplyTemplate(inputImage);
-    // return appliedTemplateMat;
+////////////////
+    cv::blur(kMeansMat, kMeansMat, cv::Size(3,3), cv::Point(-1,-1), cv::BORDER_DEFAULT);
 
-    // Returns only the circles on black background. (Green Circles)
-    // return rgbImageMatrix;
+    cv::Mat greyMat;
+    cv::cvtColor(kMeansMat, greyMat, cv::COLOR_BGR2GRAY);
 
-    // return edgeMat;
+    // cv::threshold(greyMat, greyMat, 200, 255, cv::THRESH_BINARY);
+    cv::threshold(greyMat, greyMat, 160, 200, cv::THRESH_BINARY);
+
+    std::vector<std::vector<cv::Point>> contours;
+	std::vector<cv::Vec4i> hierarchy;
+
+	cv::findContours(greyMat, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+
+	cv::Scalar red(0,0,255);
+    cv::Mat zerosMatrix = cv::Mat::zeros(greyMat.rows, greyMat.cols, CV_8UC3);
+    cv::drawContours(zerosMatrix, contours, -1, red, 2);
+
+    cv::Mat zerosMatrixCircles;
+
+    // return zerosMatrix;
+    return zerosMatrixCircles;
+
+    // OG WORKING
+	// cv::drawContours(kMeansMat, contours, -1, red, 2);
+    // return kMeansMat;
+
+////////////////
+
+    // IDEA: Retrieve all and only the black pixels
+    // Inverse that image, so they're white
+    // HoughCircle on them
+
+    // bitwiseAndMat returns ONLY the product in the image.
+    // return bitwiseAndMat;
+
 }
 
 
@@ -174,25 +192,79 @@ void ImageScanner::ConvertImageToRgb(cv::Mat image)
 
 /////////////////////////////////////////////////////////////////////////////////////
 cv::Mat ImageScanner::SegmentImageColours(cv::Mat colourImage, cv::Mat hsvImage)
-{
-    // NOTE: As inputted image is HSV not RGB (I think) - Comment out for now
-    // const cv::Scalar lightBrown{43, 26.1, 87.1};
-    // const cv::Scalar darkBrown{38, 38.4, 79.6};
-    const cv::Scalar lightBrownHsv{17, 90.6, 83.1};
-    const cv::Scalar darkBrownHsv{23, 90.4, 77.3};
+{ 
+    cv::Mat3b img = colourImage;
 
-    cv::Mat returningImage;
-    cv::Mat tempImage;
+    cv::Mat3b hsv;
+    cv::cvtColor(img, hsv, cv::COLOR_BGR2HSV);
 
-    // Threshold the image.
-    cv::inRange(hsvImage, lightBrownHsv, darkBrownHsv, tempImage);
+    cv::Mat1b mask;
+    // Uses HSV Values.
+    // Works with eye.
+    // cv::inRange(hsv, cv::Scalar(2, 100, 65), cv::Scalar(12, 170, 100), mask);
 
-    cv::Mat nonZeroCoords = GetHsvPixelLocation(tempImage);
+    // NOTE: Code Inspired by: https://stackoverflow.com/questions/31760302/detect-brown-colour-object-using-opencv
+    // Post from: Miki answered Aug 1, 2015 at 12:30.
+
+    cv::Scalar lowerBrown = cv::Scalar(15,255,150);
+    cv::Scalar upperBrown = cv::Scalar(26,88.5,54.5);
+
+    cv::Scalar lowerBrown2 = cv::Scalar(0, 100, 20);
+    cv::Scalar upperBrown2 = cv::Scalar(10, 255, 255);
+
+    cv::Scalar whiteBoundary = cv::Scalar(0, 0, 0);
+    cv::Scalar whiteBoundary2 = cv::Scalar(30, 100, 100);
+
+    cv::inRange(hsv, whiteBoundary2, upperBrown, mask);
+
+    cv::Mat1b kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+    cv::morphologyEx(mask, mask, cv::MORPH_OPEN, kernel);
+
+    std::vector<std::vector<cv::Point>> contours;
+    std::vector<cv::Vec4i> hierarchy;
+
+    cv::findContours(mask, contours, hierarchy, cv::RETR_TREE , cv::CHAIN_APPROX_SIMPLE);
+
+    int idx_largest_blob = 0;
+    if (contours.size() > 1)
+    {
+        int size_largest_blob = contours[0].size();
+
+        for (int i = 0; i < contours.size(); ++i)
+        {
+            if (size_largest_blob < contours[i].size())
+            {
+                size_largest_blob = contours[i].size();
+                idx_largest_blob = i;
+            }
+        }
+    }
+
+    cv::Mat3b res = img.clone();
+
+    cv::drawContours(res, contours, idx_largest_blob, cv::Scalar(0, 255, 0));
+
+    if(contours.size() > 0)
+    {
+        cv::RotatedRect r = cv::minAreaRect(contours[idx_largest_blob]);
+    }
     
-    // Impose the mask atop the original image - Keeps every pixel if the corresponding mask value is 1.
-    cv::bitwise_and(hsvImage, hsvImage, returningImage, nonZeroCoords);
+    cv::Point2f pts[4];
 
-    return tempImage;
+    // r.cv::points(pts);
+
+    for (int j = 0; j < 4; ++j)
+    {
+        cv::line(res, pts[j], pts[(j + 1) % 4], cv::Scalar(0, 0, 255));
+    }
+
+    if(contours.size() > 0)
+    {
+        cv::Rect box = cv::boundingRect(contours[idx_largest_blob]);
+        cv::rectangle(res, box, cv::Scalar(255, 0, 0));
+    }
+
+    return res;
 }
 
 
@@ -274,7 +346,7 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
 
     cv::cvtColor(zerosMatrix, circlesMatrix, cv::COLOR_BGR2GRAY, 1);
 
-    // MEDIAN BLUR
+    // Median Blur.
     // cv::medianBlur(circlesMatrix, circlesMatrix, 3);
 
     // Smooth the image - Prevent false circles detection.
@@ -287,8 +359,6 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
 
     const int imageWidth = circlesMatrix.cols;
     const int imageHeight = circlesMatrix.rows;
-    LOG(INFO) << "Width : " << imageWidth;
-    LOG(INFO) << "Height: " << imageHeight;
 
     // NOTE:
     // Code below inspired by: https://stackoverflow.com/questions/20698613/detect-semicircle-in-opencv
@@ -343,11 +413,7 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
                 cv::Point textPoint(circles[i][0], circles[i][1]+100);
                 cv::putText(circlesMatrix, BOTTOM_RIGHT, textPoint, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 255, 255), 5);
             }
-        }
-
-
-        // Draw text to show *which* bolt has been detected.
-        
+        }   
     }
 
     ///////////////////////////////////
@@ -361,7 +427,6 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
 
     for(size_t i = 0; i < circles.size(); i++ ) 
     {
-        // Test inlier percentage:
         // Sample the circle and check for distance to the next edge
         unsigned int counter = 0;
         unsigned int inlier = 0;
@@ -377,7 +442,7 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
             maxInlierDist = minInlierDist;
         }
 
-        //TODO: maybe paramter incrementation might depend on circle size!
+        // Perhaps look at circle size - If too big, do not include it.
         for(float t = 0; t < 2 * 3.14159265359f; t += 0.1f)
         {
             counter++;
@@ -388,18 +453,57 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
             {
                 inlier++;
                 cv::circle(cv::Scalar(255,0,0), cv::Point2i(cX,cY),3, cv::Scalar(255,0,0));
-                // Green: 0, 255, 0
             } 
             else
             {
                 cv::circle(cv::Scalar(255,0,0), cv::Point2i(cX,cY),3, cv::Scalar(255,0,0));
-                // Green: 0, 255, 0
             }
         }
         LOG(INFO) << 100.0f*(float)inlier/(float)counter << " % of a circle with radius " << radius << " detected" << std::endl;
     }
 
     return circlesMatrix;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+cv::Mat ImageScanner::DetectMissingBoltCircles(cv::Mat rgbMat)
+{
+    // box blur -> threshold -> canny -> contours:
+    cv::Mat returnImage = cv::Mat::zeros(rgbMat.rows, rgbMat.cols, CV_8UC1);
+    cv::Mat thresholdImage;
+    cv::Mat blurredImage;
+    cv::Mat cannyImage;
+    cv::Mat gray;
+
+    std::vector<cv::Vec3f> circles;
+
+    cv::blur(rgbMat, blurredImage, cv::Size(18.7,18.7), cv::Point(-1, -1), cv::BORDER_DEFAULT);
+
+    // Convert image to grayscale
+    cv::cvtColor(rgbMat, gray, cv::COLOR_BGR2GRAY);
+    // Convert image to binary
+
+    cv::adaptiveThreshold(gray, blurredImage, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, 111, 17);
+
+    // cannyImage = ApplyEdgeDetection(blurredImage);
+    cv::Canny(blurredImage, cannyImage, 100, 900, 3, true);
+
+    // OG
+    cv::threshold(blurredImage, thresholdImage, 1, 255, cv::THRESH_BINARY);
+
+    // TEMP
+    return thresholdImage;
+
+    returnImage = ApplyEdgeDetection(thresholdImage);
+
+    std::vector<std::vector<cv::Point>> contours;
+    std::vector<cv::Vec4i> hierarchy;
+
+    // cv::findContours(returnImage, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+    cv::findContours(returnImage, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+    return returnImage;
 }
 
 
@@ -453,10 +557,6 @@ cv::Mat ImageScanner::ApplyTemplate(cv::Mat rgbImage)
 
     cv::cvtColor(rgbImage, greyscaleImage, cv::COLOR_BGR2GRAY);
 
-    LOG(INFO) << "rgbImage: " <<  rgbImage.depth();
-    LOG(INFO) << "greyscaleImage: " <<  greyscaleImage.depth();
-    LOG(INFO) << "matchingResultTemplate: " <<  matchingResultTemplate.depth();
-
     // OG
     // cv::matchTemplate(greyscaleImage, greyscaleBolt04, matchingResultTemplate, cv::TM_SQDIFF, cv::noArray());
 
@@ -485,95 +585,55 @@ cv::Mat ImageScanner::ApplyKMeansAlgorithm(cv::Mat rgbImage)
     // https://docs.opencv.org/3.4/d1/d5c/tutorial_py_kmeans_opencv.html
     // https://docs.opencv.org/3.4/d5/d38/group__core__cluster.html#ga9a34dc06c6ec9460e90860f15bcd2f88
 
+    // NOTE:
+    // Code inspired by: https://github.com/abubakr-shafique/K_Means_Clustering_CPP/blob/master/K_Means_Clustering.cpp
 
+    // Change to float.
+    cv::Mat samples(rgbImage.rows * rgbImage.cols, rgbImage.channels(), CV_32F);
     cv::Mat labels;
-    double compactness;
+	int attempts = 5;
+	cv::Mat centers;
 
-    cv::Scalar colourTab[] =
+	for(int y = 0; y < rgbImage.rows; y++)
     {
-        cv::Scalar(0, 0, 255),
-        cv::Scalar(0,255,0),
-        cv::Scalar(255,100,100),
-        cv::Scalar(255,0,255),
-        cv::Scalar(0,255,255)
-    };
+		for(int x = 0; x < rgbImage.cols; x++)
+        {
+            for(int z = 0; z < rgbImage.channels(); z++)
+            {
+				if (rgbImage.channels() == 3) {
+					samples.at<float>(y + x * rgbImage.rows, z) = rgbImage.at<cv::Vec3b>(y, x)[z];
+				}
+				else
+                {
+                    samples.at<float>(y + x * rgbImage.rows, z) = rgbImage.at<uchar>(y, x);
+				}
+            }
+        }
+    }
 
-    std::vector<cv::Point2f> centers;
+    // 2nd Argument DEFAULT: 4 - WORKING
+	cv::kmeans(samples, 4, labels, cv::TermCriteria(cv::TermCriteria::MAX_ITER | cv::TermCriteria::EPS, 10000, 0.0001), attempts, cv::KMEANS_PP_CENTERS, centers);
 
-    cv::Mat matPoints(50, 1, CV_32FC2);
-
-    // compactness = cv::kmeans(matPoints, 4, labels, cv::TermCriteria(cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 10, 1.0), 3, cv::KMEANS_USE_INITIAL_LABELS, centers);
-
-    compactness = cv::kmeans(matPoints, 4, labels, cv::TermCriteria(cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 10, 1.0), 30, cv::KMEANS_PP_CENTERS , cv::noArray());
-
-    // May need to comment out:
-    rgbImage = cv::Scalar::all(0);
-
-    for (int i = 0; i < centers.size(); i++)
+	cv::Mat newImage(rgbImage.size(), rgbImage.type());
+	for (int y = 0; y < rgbImage.rows; y++)
     {
-        cv::Point2f centre = centers[i];
-        cv::circle(rgbImage, centre, 40, colourTab[i], 1, cv::LINE_AA);
+		for (int x = 0; x < rgbImage.cols; x++)
+		{
+			int clusterIDX = labels.at<int>(y + x * rgbImage.rows, 0);
+
+			if (rgbImage.channels()==3)
+            {
+				for (int i = 0; i < rgbImage.channels(); i++)
+                {
+					newImage.at<cv::Vec3b>(y, x)[i] = centers.at<float>(clusterIDX, i);
+				}
+			}
+			else
+            {
+				newImage.at<uchar>(y, x) = centers.at<float>(clusterIDX, 0);
+			}
+		}
     }
     
-    return rgbImage;
-
-
-    /////////////////////////////////////////////////////
-
-    // const int MAX_CLUSTERS = 5;
-    // cv::Scalar colorTab[] =
-    // {
-    //     cv::Scalar(0, 0, 255),
-    //     cv::Scalar(0,255,0),
-    //     cv::Scalar(255,100,100),
-    //     cv::Scalar(255,0,255),
-    //     cv::Scalar(0,255,255)
-    // };
-    // cv::Mat img(500, 500, CV_8UC3);
-    // cv::RNG rng(12345);
-
-    // int k, clusterCount = rng.uniform(2, MAX_CLUSTERS+1);
-    // int i, sampleCount = rng.uniform(1, 1001);
-    // cv::Mat points(sampleCount, 1, CV_32FC2), labels;
-
-    // clusterCount = MIN(clusterCount, sampleCount);
-
-
-
-    // std::vector<cv::Point2f> centers;
-    // /* generate random sample from multigaussian distribution */
-    // for( k = 0; k < clusterCount; k++ )
-    // {
-    //     cv::Point center;
-    //     center.x = rng.uniform(0, img.cols);
-    //     center.y = rng.uniform(0, img.rows);
-    //     cv::Mat pointChunk = points.rowRange(k*sampleCount/clusterCount,
-    //                                         k == clusterCount - 1 ? sampleCount :
-    //                                         (k+1)*sampleCount/clusterCount);
-    //     rng.fill(pointChunk, cv::RNG::NORMAL, cv::Scalar(center.x, center.y), cv::Scalar(img.cols*0.05, img.rows*0.05));
-    // }
-    // cv::randShuffle(points, 1, &rng);
-    
-    // double compactness = kmeans(points, clusterCount, labels,
-    //     cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 10, 1.0),
-    //         3, cv::KMEANS_PP_CENTERS, centers);
-
-    // img = cv::Scalar::all(0);
-
-    // for(int i = 0; i < sampleCount; i++)
-    // {
-    //     int clusterIdx = labels.at<int>(i);
-    //     cv::Point ipt = points.at<cv::Point2f>(i);
-    //     cv::circle( img, ipt, 2, colorTab[clusterIdx], cv::FILLED, cv::LINE_AA );
-    // }
-
-    // for (int i = 0; i < (int)centers.size(); ++i)
-    // {
-    //     cv::Point2f c = centers[i];
-    //     circle( img, c, 40, colorTab[i], 1, cv::LINE_AA );
-    // }
-
-
-    // return img;
-
+    return newImage;
 }
