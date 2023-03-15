@@ -75,6 +75,9 @@ namespace utils
         // True if product is faulty.
         bool isProductFaulty;
 
+        // Vector of Vec3f circles to store found bolts.
+        std::vector<cv::Vec3f> productBoltCirclesFound;
+
         /// Threshold values - Allowing for a range of HSV values to encompass a the colour range.
         /// Hue, Saturation, Value.
         const cv::Scalar HSVLowerValue; // Original: 0,0,38 - Dark Grey
@@ -171,6 +174,22 @@ namespace utils
         /// @param hsvImage - OpenCV matrix object containing a HSV image.
         ////////////////////////////////////////////////////////////////////////////////////
         cv::Mat ApplyKMeansAlgorithm(cv::Mat rgbImage);
+
+        
+        ////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
+        /// @brief Used to find the HSV values for bolts within the image.
+        /// @param boltVector -Value containing the bolt positions.
+        ////////////////////////////////////////////////////////////////////////////////////
+        inline void SetProductBoltCirclesFound(std::vector<cv::Vec3f> boltVector)
+        {
+            productBoltCirclesFound = boltVector;
+        }
+
+        inline std::vector<cv::Vec3f> GetProductBoltCirclesFound()
+        {
+            return productBoltCirclesFound;
+        }
     };
 
 }
