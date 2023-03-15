@@ -66,6 +66,15 @@ namespace utils
         cv::Mat scannedImage;
         cv::Mat nonZeroCoordinates;
 
+        // Total count of bolts for the product.
+        int productBoltCount;
+        // Total count of bolts expected.
+        const int  productBoltCountExpected = 4;
+        // Total count of missing bolts.
+        int productBoltMissingCount;
+        // True if product is faulty.
+        bool isProductFaulty;
+
         /// Threshold values - Allowing for a range of HSV values to encompass a the colour range.
         /// Hue, Saturation, Value.
         const cv::Scalar HSVLowerValue; // Original: 0,0,38 - Dark Grey

@@ -121,7 +121,11 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
     colourSegmentMat = SegmentImageColours(bitwiseAndMat, bitwiseAndMat);
     // return colourSegmentMat;
 
+    // IF BOLT COUNT < 4:
+    // DO THIS
+
     // Works:
+    // Returns JUST the K-Means matrix
     cv::Mat kMeansMat;
     kMeansMat = ApplyKMeansAlgorithm(bitwiseAndMat);
     // return kMeansMat;
@@ -147,11 +151,39 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
     cv::Mat zerosMatrixCircles;
 
     // return zerosMatrix;
-    return zerosMatrixCircles;
+    // return zerosMatrixCircles;
 
     // OG WORKING
-	// cv::drawContours(kMeansMat, contours, -1, red, 2);
+	cv::drawContours(kMeansMat, contours, -1, red, 2);
     // return kMeansMat;
+
+    // TEMP CIRCLES
+    std::vector<cv::Vec3f> circles;
+    cv::Mat kMeansGrey;
+
+    cv::cvtColor(kMeansMat, kMeansGrey, cv::COLOR_BGR2GRAY);
+
+    cv::HoughCircles(kMeansGrey, circles, cv::HOUGH_GRADIENT, 1, 60, 200, 20, 50, 90);
+    for(size_t i = 0; i < circles.size(); i++)
+    {
+        // Draw on inputImage to draw atop original image.
+        LOG(INFO) << "i 0: " << circles[i][0];
+        LOG(INFO) << "i 1: " << circles[i][1];
+
+        cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+        int radius = cvRound(circles[i][2]);
+        // Draw the circle center
+        cv::circle(bitwiseAndMat, center, 3, cv::Scalar(0,0,255), -1, 8, 0);
+        // Draw the circle outline
+        cv::circle(bitwiseAndMat, center, radius, cv::Scalar(0,0,255), 5, 8, 0);
+    }
+
+    return bitwiseAndMat;
+    // TEMP CIRCLES
+
+
+    
+    
 
 ////////////////
 
@@ -363,6 +395,9 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
     // NOTE:
     // Code below inspired by: https://stackoverflow.com/questions/20698613/detect-semicircle-in-opencv
     // Answered by: Micka, Dec 20, 2013 at 14:43.
+
+    productBoltCount = circles.size();
+
     for(size_t i = 0; i < circles.size(); i++)
     {
         // Draw on inputImage to draw atop original image.
@@ -372,9 +407,9 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
         cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
         int radius = cvRound(circles[i][2]);
         // Draw the circle center
-        cv::circle(circlesMatrix, center, 3, cv::Scalar(255,0,0), -1, 8, 0 );
+        cv::circle(circlesMatrix, center, 3, cv::Scalar(255,0,0), -1, 8, 0);
         // Draw the circle outline
-        cv::circle(circlesMatrix, center, radius, cv::Scalar(255,0,0), 5, 8, 0 );
+        cv::circle(circlesMatrix, center, radius, cv::Scalar(255,0,0), 5, 8, 0);
 
         // If x < 1/2 of imageWidth = Left 
         // If x > 1/2 of imageWidth = Right
