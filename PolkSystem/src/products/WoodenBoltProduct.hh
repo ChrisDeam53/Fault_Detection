@@ -7,6 +7,8 @@
 
 #include "../parser/JSONParser.hh"
 
+
+
 namespace products
 {
 
@@ -17,20 +19,23 @@ namespace products
         WoodenBoltProduct() = default;
 
 
-        WoodenBoltProduct(std::string imageName, std::string boltNumber, bool isFaulty, std::string numberOfFaults) : productId(imageName), numberOfBolts(boltNumber),
-        isFaulty(isFaulty), numberOfFaults(numberOfFaults)
+        WoodenBoltProduct(std::string imageName, std::string boltNumber, bool isFaulty, std::string numberOfFaults, std::string timeProcessed) 
+        : productId(imageName), numberOfBolts(boltNumber), isFaulty(isFaulty), numberOfFaults(numberOfFaults), timeProcessed(timeProcessed)
         {  
             LOG(INFO) << "Product JSON: " << productJSON;
+            LOG(INFO) << "Time Processed: " << timeProcessed;
             parser::JSONParser parser(productId, productJSON);
         }
 
         private: 
         std::string productId, numberOfBolts, numberOfFaults;
         bool isFaulty = false;
+        std::string timeProcessed;
+        const std::string quote = "\"";
 
         inline std::string BoolToString(bool boolValue)
         {
-            //using ternary operators
+            // Using Ternary Operators.
             return boolValue ? "true" : "false";
         }
 
@@ -40,14 +45,14 @@ namespace products
         }
 
         std::string productJSON = 
-        "{\n\t\"ProductID\": " + productId + "," +
+        "{\n\t\"ProductID\": " + quote + productId + quote + "," +
             "\n\t\"ImageDetails\": " + "{" +
             "\n\t\t\"NumberOfBolts\": " + numberOfBolts + "," +
             "\n\t\t\"IsFaulty\": " + BoolToString(isFaulty) + "," +
-            "\n\t\t\"numberOfFaults\": " + numberOfFaults +
+            "\n\t\t\"NumberOfFaults\": " + numberOfFaults + "," +
+            "\n\t\t\"TimeProcessed\": " + quote + timeProcessed + quote + 
             "\n\t}"
-        "\n}";
-        
+        "\n}";    
     };
 }
 

@@ -22,5 +22,6 @@ namespace products
         std::string productId, numberOfBolts, IsFaulty, numberOfFaults;
         bool isFaulty = false;
         std::string setProductInformation();  
+        std::string timeProcessed;
     };
 }

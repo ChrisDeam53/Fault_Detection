@@ -8,16 +8,19 @@
 #include <vector>
 #include <string>
 
-// Temp imread:
+// imread:
 #include <opencv2/imgcodecs.hpp>
-// Temp cv::TermCriteria
+// cv::TermCriteria
 #include <opencv2/core/types.hpp>
 
-// Temp CV_32FC2
+// CV_32FC2
 #include <opencv2/core/hal/interface.h>
 
-// Will need to eventually remove for MIN
 #include <opencv2/core/cvdef.h>
+
+// Current Date and Time
+#include <chrono>
+#include <ctime> 
 
 using namespace utils;
 
@@ -104,7 +107,7 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
     cv::Mat circlesMatrix;
     circlesMatrix = DetectBoltCircles(newMaskMat);
 
-    if(productBoltCount == 4)
+    if(productBoltCount >= 4)
     {
         cv::Mat rgbImageMatrix;
         cv::cvtColor(circlesMatrix, rgbImageMatrix, cv::COLOR_GRAY2BGR, 3);
@@ -117,20 +120,44 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
         // Impose the Green circles mask atop the original image.
         cv::Mat detectedBoltsMatrix;
         cv::bitwise_or(inputImage, rgbImageMatrix, detectedBoltsMatrix);
+
+        time_t rawtime;
+
+        time (&rawtime);
+        LOG(INFO) <<  ("Time Processed: %s", ctime(&rawtime));
+        std::string timeProcessed = ctime(&rawtime);
+
+        SetImageTimeProcessed(timeProcessed);
+
+        cv::Point topLeft1(350, 350);
+        cv::Point topLeft2(350, 450);
+        cv::Point topLeft3(350, 550);
+        cv::Point topLeft4(350, 650);
+        cv::Point topLeft5(350, 750);
+
+        productBoltCount = 4;
+        productBoltMissingCount = PRODUCT_BOLT_COUNT_EXPECTED - productBoltCount;
+        isProductFaulty = false;
+        std::string isProductFaultyString = "False";
+
+        if (isProductFaulty == true)
+        {
+            isProductFaultyString = "True";
+        }
+
+        cv::putText(detectedBoltsMatrix, "Expected Bolt Count: " + std::to_string(PRODUCT_BOLT_COUNT_EXPECTED), topLeft1, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "Actual Bolt Count: " + std::to_string(productBoltCount), topLeft2, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "IsFaulty: " + isProductFaultyString, topLeft3, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "NumberOfFaults: " + std::to_string(productBoltMissingCount), topLeft4, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "Time Processed: " + timeProcessed, topLeft5, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+
         return detectedBoltsMatrix;
     }
     else
     {  
-        // TESTING ONWARDS:
-        // cv::Mat colourSegmentMat;
-        // colourSegmentMat = SegmentImageColours(bitwiseAndMat, bitwiseAndMat);
-        // return colourSegmentMat;
-
-        // Works:
         // Returns JUST the K-Means matrix
         cv::Mat kMeansMat;
         kMeansMat = ApplyKMeansAlgorithm(bitwiseAndMat);
-        // return kMeansMat;
 
         cv::blur(kMeansMat, kMeansMat, cv::Size(3,3), cv::Point(-1,-1), cv::BORDER_DEFAULT);
 
@@ -151,19 +178,31 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
 
         cv::Mat zerosMatrixCircles;
 
-        // OG WORKING
         cv::drawContours(kMeansMat, contours, -1, red, 2);
-        // return kMeansMat;
 
         std::vector<cv::Vec3f> circles;
         cv::Mat kMeansGrey;
 
         cv::cvtColor(kMeansMat, kMeansGrey, cv::COLOR_BGR2GRAY);
 
-        cv::HoughCircles(kMeansGrey, circles, cv::HOUGH_GRADIENT, 1, 60, 200, 20, 50, 75); // 90 last OG
+        cv::HoughCircles(kMeansGrey, circles, cv::HOUGH_GRADIENT, 1, 60, 200, 20, 50, 75); // 90 last original.
 
-        ////////////////////////////////////////////////////
-        // TEST:
+        if(circles.size() > 4)
+        {
+            // If there are more than 4 Faults found - Lessen the number of incorrect faults.
+            circles.clear();
+            cv::HoughCircles(kMeansGrey, circles, cv::HOUGH_GRADIENT, 1, 700, 300, 20, 60, 90);
+        }
+        if(circles.size() == 0)
+        {
+            // If there are no Bolts found.
+            circles.clear();
+            cv::Mat cannyKMeans;
+            // Orignal lower value: 200
+            cv::Canny(kMeansGrey, cannyKMeans, 100, 700, 3, true);
+            cv::HoughCircles(kMeansGrey, circles, cv::HOUGH_GRADIENT, 1, 700, 300, 20, 40, 90);
+        }
+
         cv::Mat rgbImageMatrix;
         cv::cvtColor(circlesMatrix, rgbImageMatrix, cv::COLOR_GRAY2BGR, 3);
 
@@ -175,54 +214,99 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
         // Impose the Green circles mask atop the original image.
         cv::Mat detectedBoltsMatrix;
         cv::bitwise_or(inputImage, rgbImageMatrix, detectedBoltsMatrix);
-        ///////////////////////////////////////////////////
-
 
         for(size_t i = 0; i < circles.size(); i++)
         {
-            // Draw on inputImage to draw atop original image.
-            LOG(INFO) << "i 0: " << circles[i][0];
-            LOG(INFO) << "i 1: " << circles[i][1];
+            if(GetProductBoltCirclesFound().size() > 0)
+            {
+                // Bolts exist atop the image.
+                // Draw on inputImage to draw atop original image.
+                if(((circles[i][0] - GetProductBoltCirclesFound()[i][0] > 100)  || (GetProductBoltCirclesFound()[i][0] - circles[i][0] > 100)) && 
+                    ((circles[i][1] - GetProductBoltCirclesFound()[i][1] > 100) || (GetProductBoltCirclesFound()[i][1] - circles[i][1] > 100)))
+                    {
+                        // If X or Y distance is greater than 100.
+                        cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+                        int radius = cvRound(circles[i][2]);
+                        // Draw the circle center.
+                        cv::circle(detectedBoltsMatrix, center, 3, cv::Scalar(0,0,255), -1, 8, 0);
+                        // Draw the circle outline.
+                        cv::circle(detectedBoltsMatrix, center, radius, cv::Scalar(0,0,255), 5, 8, 0);
+                        
+                        cv::Point topLeft(cvRound(circles[i][0]-80), cvRound(circles[i][1]-80));
+                        cv::Point bottomRight(cvRound(circles[i][0]+80), cvRound(circles[i][1])+80);
 
-            LOG(INFO) << "TEST i 0: " << GetProductBoltCirclesFound().size();
+                        cv::rectangle(detectedBoltsMatrix, topLeft, bottomRight, cv::Scalar(0,0,255), 3, cv::LINE_8, 0);
 
-            if(((circles[i][0] - GetProductBoltCirclesFound()[i][0] > 100)  || (GetProductBoltCirclesFound()[i][0] - circles[i][0] > 100)) && 
-                ((circles[i][1] - GetProductBoltCirclesFound()[i][1] > 100) || (GetProductBoltCirclesFound()[i][1] - circles[i][1] > 100)))
-                {
-                    // IF X OR Y DISTANCE IS GREATER THAN 100
+                        cv::Point textPoint(circles[i][0], circles[i][1]+180);
+                        cv::putText(detectedBoltsMatrix, "!!MISSING BOLT!!", textPoint, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0,0,255), 5);
 
-                    cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-                    int radius = cvRound(circles[i][2]);
-                    // Draw the circle center
-                    cv::circle(detectedBoltsMatrix, center, 3, cv::Scalar(0,0,255), -1, 8, 0);
-                    // Draw the circle outline
-                    cv::circle(detectedBoltsMatrix, center, radius, cv::Scalar(0,0,255), 5, 8, 0);
-                    
-                    cv::Point topLeft(cvRound(circles[i][0]-80), cvRound(circles[i][1]-80));
-                    cv::Point bottomRight(cvRound(circles[i][0]+80), cvRound(circles[i][1])+80);
+                        cv::Point textPoint2(circles[i][0], circles[i][1]+240);
 
-                    cv::rectangle(detectedBoltsMatrix, topLeft, bottomRight, cv::Scalar(0,0,255), 3, cv::LINE_8, 0);
+                        std::string boltXLocation = std::to_string(circles[i][0]);
+                        std::string boltYLocation = std::to_string(circles[i][1]);
+                        std::string boltLocation = boltXLocation + "  " +  boltYLocation;
 
-                    cv::Point textPoint(circles[i][0], circles[i][1]+180);
-                    cv::putText(detectedBoltsMatrix, "!!MISSING BOLT!!", textPoint, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0,0,255), 5);
+                        cv::putText(detectedBoltsMatrix, "!!MISSING BOLT!!", textPoint, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0,0,255), 5);
+                        cv::putText(detectedBoltsMatrix, boltLocation, textPoint2, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0,0,255), 5);
+                    }
+            }
+            else
+            {
+                // No Bolts have been found - Apply areas with missing circles.
+                cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+                int radius = cvRound(circles[i][2]);
+                // Draw the circle center.
+                cv::circle(detectedBoltsMatrix, center, 3, cv::Scalar(0,0,255), -1, 8, 0);
+                // Draw the circle outline.
+                cv::circle(detectedBoltsMatrix, center, radius, cv::Scalar(0,0,255), 5, 8, 0);
+                
+                cv::Point topLeft(cvRound(circles[i][0]-80), cvRound(circles[i][1]-80));
+                cv::Point bottomRight(cvRound(circles[i][0]+80), cvRound(circles[i][1])+80);
 
-                    cv::Point textPoint2(circles[i][0], circles[i][1]+240);
+                cv::rectangle(detectedBoltsMatrix, topLeft, bottomRight, cv::Scalar(0,0,255), 3, cv::LINE_8, 0);
 
-                    std::string boltXLocation = std::to_string(circles[i][0]);
-                    std::string boltYLocation = std::to_string(circles[i][1]);
-                    std::string boltLocation = boltXLocation + "  " +  boltYLocation;
+                cv::Point textPoint(circles[i][0], circles[i][1]+180);
+                cv::putText(detectedBoltsMatrix, "!!MISSING BOLT!!", textPoint, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0,0,255), 5);
 
-                    cv::putText(detectedBoltsMatrix, "!!MISSING BOLT!!", textPoint, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0,0,255), 5);
-                    cv::putText(detectedBoltsMatrix, boltLocation, textPoint2, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0,0,255), 5);
-                }
+                cv::Point textPoint2(circles[i][0], circles[i][1]+240);
 
-            // cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-            // int radius = cvRound(circles[i][2]);
-            // // Draw the circle center
-            // cv::circle(detectedBoltsMatrix, center, 3, cv::Scalar(0,0,255), -1, 8, 0);
-            // // Draw the circle outline
-            // cv::circle(detectedBoltsMatrix, center, radius, cv::Scalar(0,0,255), 5, 8, 0);
+                std::string boltXLocation = std::to_string(circles[i][0]);
+                std::string boltYLocation = std::to_string(circles[i][1]);
+                std::string boltLocation = boltXLocation + "  " +  boltYLocation;
+
+                cv::putText(detectedBoltsMatrix, "!!MISSING BOLT!!", textPoint, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0,0,255), 5);
+                cv::putText(detectedBoltsMatrix, boltLocation, textPoint2, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0,0,255), 5);
+            }
         }
+
+        time_t rawtime;
+
+        time (&rawtime);
+        LOG(INFO) <<  ("Time Processed: %s", ctime(&rawtime));
+        std::string timeProcessed = ctime(&rawtime);
+
+        SetImageTimeProcessed(timeProcessed);
+
+        cv::Point topLeft1(350, 350);
+        cv::Point topLeft2(350, 450);
+        cv::Point topLeft3(350, 550);
+        cv::Point topLeft4(350, 650);
+        cv::Point topLeft5(350, 750);
+
+        productBoltMissingCount = PRODUCT_BOLT_COUNT_EXPECTED - productBoltCount;
+        isProductFaulty = true;
+        std::string isProductFaultyString = "False";
+
+        if (isProductFaulty == true)
+        {
+            isProductFaultyString = "True";
+        }
+
+        cv::putText(detectedBoltsMatrix, "Expected Bolt Count: " + std::to_string(PRODUCT_BOLT_COUNT_EXPECTED), topLeft1, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "Actual Bolt Count: " + std::to_string(productBoltCount), topLeft2, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "IsFaulty: " + isProductFaultyString, topLeft3, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "NumberOfFaults: " + std::to_string(productBoltMissingCount), topLeft4, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "Time Processed: " + timeProcessed, topLeft5, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
 
         return detectedBoltsMatrix;
     }
@@ -254,6 +338,7 @@ void ImageScanner::ConvertImageToRgb(cv::Mat image)
     cv::cvtColor(image, image, cv::COLOR_HSV2BGR, 3);
 }
 
+
 /////////////////////////////////////////////////////////////////////////////////////
 cv::Mat ImageScanner::SegmentImageColours(cv::Mat colourImage, cv::Mat hsvImage)
 { 
@@ -264,9 +349,6 @@ cv::Mat ImageScanner::SegmentImageColours(cv::Mat colourImage, cv::Mat hsvImage)
 
     cv::Mat1b mask;
     // Uses HSV Values.
-    // Works with eye.
-    // cv::inRange(hsv, cv::Scalar(2, 100, 65), cv::Scalar(12, 170, 100), mask);
-
     // NOTE: Code Inspired by: https://stackoverflow.com/questions/31760302/detect-brown-colour-object-using-opencv
     // Post from: Miki answered Aug 1, 2015 at 12:30.
 
@@ -314,8 +396,6 @@ cv::Mat ImageScanner::SegmentImageColours(cv::Mat colourImage, cv::Mat hsvImage)
     }
     
     cv::Point2f pts[4];
-
-    // r.cv::points(pts);
 
     for (int j = 0; j < 4; ++j)
     {
@@ -368,7 +448,6 @@ cv::Mat ImageScanner::ThresholdWoodenShape(cv::Mat rgbImage)
     // Convert RGB to Greyscale for Omotsu's Thresholding.
     cv::cvtColor(rgbImage, greyscaleImage, cv::COLOR_BGR2GRAY);
 
-    // Image 21 -> (non-adaptive threshold)
     // Apply a fixed-level threshold to each array element.
     cv::threshold(greyscaleImage, returnImage, 127, 255, cv::THRESH_BINARY_INV);
 
@@ -410,18 +489,17 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
 
     cv::cvtColor(zerosMatrix, circlesMatrix, cv::COLOR_BGR2GRAY, 1);
 
-    // Median Blur.
+    // Median Blur - Original.
     // cv::medianBlur(circlesMatrix, circlesMatrix, 3);
 
     // Smooth the image - Prevent false circles detection.
     cv::GaussianBlur(circlesMatrix, circlesMatrix, cv::Size(9, 9), 2, 2);
 
-    // Apply HoughCircles to find circles.
-    cv::HoughCircles(circlesMatrix, circles, cv::HOUGH_GRADIENT, 1, 60, 200, 20, 0, 0);
+    // Apply HoughCircles to find circles. Provided with original version.
+    // cv::HoughCircles(circlesMatrix, circles, cv::HOUGH_GRADIENT, 1, 60, 200, 20, 0, 0);
+    cv::HoughCircles(circlesMatrix, circles, cv::HOUGH_GRADIENT, 1, 60, 200, 20, 50, 75);
 
     SetProductBoltCirclesFound(circles);
-
-    LOG(INFO) << "--eeee- circles.size() " << circles.size();
 
     const int imageWidth = circlesMatrix.cols;
     const int imageHeight = circlesMatrix.rows;
@@ -444,11 +522,6 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
         cv::circle(circlesMatrix, center, 3, cv::Scalar(255,0,0), -1, 8, 0);
         // Draw the circle outline
         cv::circle(circlesMatrix, center, radius, cv::Scalar(255,0,0), 5, 8, 0);
-
-        // If x < 1/2 of imageWidth = Left 
-        // If x > 1/2 of imageWidth = Right
-        // If y < 1/2 of imageHeight = Top
-        // If y < 1/2 of imageHeight = Bottom
 
         if(circles[i][0] < (imageWidth / 2))
         {
@@ -509,8 +582,6 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
         }   
     }
 
-    ///////////////////////////////////
-
     // Compute distance transform.
     cv::Mat dt;
     cv::distanceTransform(255 - (edgeMat > 0), dt, cv::DIST_MASK_3 ,3);
@@ -520,14 +591,14 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
 
     for(size_t i = 0; i < circles.size(); i++ ) 
     {
-        // Sample the circle and check for distance to the next edge
+        // Sample the circle and check for distance to the next edge.
         unsigned int counter = 0;
         unsigned int inlier = 0;
 
         cv::Point2f center((circles[i][0]), (circles[i][1]));
         float radius = (circles[i][2]);
 
-        // maximal distance of inlier might depend on the size of the circle
+        // Maximal distance of inlier might depend on the size of the circle.
         float maxInlierDist = radius/25.0f;
 
         if(maxInlierDist < minInlierDist)
@@ -535,9 +606,9 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
             maxInlierDist = minInlierDist;
         }
 
-        // Perhaps look at circle size - If too big, do not include it.
         for(float t = 0; t < 2 * 3.14159265359f; t += 0.1f)
         {
+            // Perhaps look at circle size - If too big, do not include it.
             counter++;
             float cX = radius * cos(t) + circles[i][0];
             float cY = radius * sin(t) + circles[i][1];
@@ -562,7 +633,6 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
 /////////////////////////////////////////////////////////////////////////////////////
 cv::Mat ImageScanner::DetectMissingBoltCircles(cv::Mat rgbMat)
 {
-    // box blur -> threshold -> canny -> contours:
     cv::Mat returnImage = cv::Mat::zeros(rgbMat.rows, rgbMat.cols, CV_8UC1);
     cv::Mat thresholdImage;
     cv::Mat blurredImage;
@@ -571,18 +641,18 @@ cv::Mat ImageScanner::DetectMissingBoltCircles(cv::Mat rgbMat)
 
     std::vector<cv::Vec3f> circles;
 
+    // Box Blur.
     cv::blur(rgbMat, blurredImage, cv::Size(18.7,18.7), cv::Point(-1, -1), cv::BORDER_DEFAULT);
 
     // Convert image to grayscale
     cv::cvtColor(rgbMat, gray, cv::COLOR_BGR2GRAY);
     // Convert image to binary
 
+    // Threshold.
     cv::adaptiveThreshold(gray, blurredImage, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, 111, 17);
 
-    // cannyImage = ApplyEdgeDetection(blurredImage);
     cv::Canny(blurredImage, cannyImage, 100, 900, 3, true);
 
-    // OG
     cv::threshold(blurredImage, thresholdImage, 1, 255, cv::THRESH_BINARY);
 
     // TEMP
@@ -650,7 +720,7 @@ cv::Mat ImageScanner::ApplyTemplate(cv::Mat rgbImage)
 
     cv::cvtColor(rgbImage, greyscaleImage, cv::COLOR_BGR2GRAY);
 
-    // OG
+    // Original version.
     // cv::matchTemplate(greyscaleImage, greyscaleBolt04, matchingResultTemplate, cv::TM_SQDIFF, cv::noArray());
 
     cv::matchTemplate(greyscaleImage, greyscaleBolt03, matchingResultTemplate, cv::TM_CCOEFF_NORMED, cv::noArray());
@@ -704,7 +774,7 @@ cv::Mat ImageScanner::ApplyKMeansAlgorithm(cv::Mat rgbImage)
         }
     }
 
-    // 2nd Argument DEFAULT: 4 - WORKING
+    // 4 Clusters seem to be accurate for results.
 	cv::kmeans(samples, 4, labels, cv::TermCriteria(cv::TermCriteria::MAX_ITER | cv::TermCriteria::EPS, 10000, 0.0001), attempts, cv::KMEANS_PP_CENTERS, centers);
 
 	cv::Mat newImage(rgbImage.size(), rgbImage.type());

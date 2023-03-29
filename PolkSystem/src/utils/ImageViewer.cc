@@ -33,6 +33,8 @@ void ImageViewer::WriteImage(cv::Mat image, const std::string imageName)
     const std::string imageFilePath("../src/../images/scannedImages/");
     const std::string imageExtension(".jpg");
     const std::string imageSaveLocation = imageFilePath + imageName + imageExtension;
+
+    SetImageName(imageName);
     
     cv::imwrite(imageSaveLocation, image);
     LOG(INFO) << "Image has been written to: " << imageFilePath << imageName << imageExtension;

@@ -28,6 +28,18 @@ namespace utils
         /////////////////////////////////////////////////////////////////////////////////////
         void WriteImage(cv::Mat image, const std::string imageName);
 
+        inline std::string GetImageName()
+        {
+            return imageName;
+        }
+
         private:
+
+        inline void SetImageName(std::string inputImageName)
+        {
+            imageName = inputImageName;
+        }
+
+        std::string imageName;
     };
 }
