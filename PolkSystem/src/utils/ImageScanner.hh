@@ -83,6 +83,9 @@ namespace utils
 
         std::string imageTimeProcessed;
 
+        // Used to deal with empty input images.
+        bool isImageEmpty = false;
+
         // Total count of bolts for the product.
         int productBoltCount;
         // Total count of bolts expected.
@@ -176,6 +179,12 @@ namespace utils
 
         ////////////////////////////////////////////////////////////////////////////////////
         /// @author Christopher Deam.
+        /// @brief Returns an empty Matrix when an empty Matrix is provided.
+        ////////////////////////////////////////////////////////////////////////////////////
+        cv::Mat ReturnEmptyMatrix();
+
+        ////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
         /// @brief Used to find the HSV values for bolts within the image.
         /// @param boltVector -Value containing the bolt positions.
         ////////////////////////////////////////////////////////////////////////////////////
@@ -184,6 +193,11 @@ namespace utils
             productBoltCirclesFound = boltVector;
         }
 
+        ////////////////////////////////////////////////////////////////////////////////////
+        /// @author Christopher Deam.
+        /// @brief Used to set the current time to be displayed against the image.
+        /// @param currentTime - Time object representing the current time.
+        ////////////////////////////////////////////////////////////////////////////////////
         inline void SetImageTimeProcessed(std::string currentTime)
         {
             imageTimeProcessed = currentTime;

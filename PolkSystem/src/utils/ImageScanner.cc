@@ -30,6 +30,11 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
     // Convert Colours into HSV.
     ConvertImageToHsv(inputImage);
 
+    if(isImageEmpty == true)
+    {
+        return ReturnEmptyMatrix();
+    }
+
     // Find the values within the threshold.
     cv::Mat returningImage;
     cv::Mat tempImage = inputImage;
@@ -107,6 +112,12 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
     cv::Mat circlesMatrix;
     circlesMatrix = DetectBoltCircles(newMaskMat);
 
+    // Providing a seed value
+	srand((unsigned) time(NULL));
+
+    // Get a random number
+	int generatedIDNumber = rand();
+
     if(productBoltCount >= 4)
     {
         cv::Mat rgbImageMatrix;
@@ -129,6 +140,8 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
 
         SetImageTimeProcessed(timeProcessed);
 
+        cv::Point topLeftResult(350, 150);
+        cv::Point topLeft0(350, 250);
         cv::Point topLeft1(350, 350);
         cv::Point topLeft2(350, 450);
         cv::Point topLeft3(350, 550);
@@ -145,10 +158,12 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
             isProductFaultyString = "True";
         }
 
-        cv::putText(detectedBoltsMatrix, "Expected Bolt Count: " + std::to_string(PRODUCT_BOLT_COUNT_EXPECTED), topLeft1, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
-        cv::putText(detectedBoltsMatrix, "Actual Bolt Count: " + std::to_string(productBoltCount), topLeft2, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "PASSED", topLeftResult, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,128,0), 5);
+        cv::putText(detectedBoltsMatrix, "ID: " + std::to_string(generatedIDNumber), topLeft0, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "Expected Bolts: " + std::to_string(PRODUCT_BOLT_COUNT_EXPECTED), topLeft1, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "Actual Boltst: " + std::to_string(productBoltCount), topLeft2, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
         cv::putText(detectedBoltsMatrix, "IsFaulty: " + isProductFaultyString, topLeft3, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
-        cv::putText(detectedBoltsMatrix, "NumberOfFaults: " + std::to_string(productBoltMissingCount), topLeft4, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "Fault No.: " + std::to_string(productBoltMissingCount), topLeft4, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
         cv::putText(detectedBoltsMatrix, "Time Processed: " + timeProcessed, topLeft5, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
 
         return detectedBoltsMatrix;
@@ -287,6 +302,8 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
 
         SetImageTimeProcessed(timeProcessed);
 
+        cv::Point topLeftResult(350, 150);
+        cv::Point topLeft0(350, 250);
         cv::Point topLeft1(350, 350);
         cv::Point topLeft2(350, 450);
         cv::Point topLeft3(350, 550);
@@ -302,10 +319,12 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
             isProductFaultyString = "True";
         }
 
-        cv::putText(detectedBoltsMatrix, "Expected Bolt Count: " + std::to_string(PRODUCT_BOLT_COUNT_EXPECTED), topLeft1, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
-        cv::putText(detectedBoltsMatrix, "Actual Bolt Count: " + std::to_string(productBoltCount), topLeft2, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "FAILED", topLeftResult, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,255), 5);
+        cv::putText(detectedBoltsMatrix, "ID: " + std::to_string(generatedIDNumber), topLeft0, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "Expected Bolts: " + std::to_string(PRODUCT_BOLT_COUNT_EXPECTED), topLeft1, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "Actual Bolts: " + std::to_string(productBoltCount), topLeft2, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
         cv::putText(detectedBoltsMatrix, "IsFaulty: " + isProductFaultyString, topLeft3, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
-        cv::putText(detectedBoltsMatrix, "NumberOfFaults: " + std::to_string(productBoltMissingCount), topLeft4, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "Fault No.: " + std::to_string(productBoltMissingCount), topLeft4, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
         cv::putText(detectedBoltsMatrix, "Time Processed: " + timeProcessed, topLeft5, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
 
         return detectedBoltsMatrix;
@@ -320,9 +339,22 @@ void ImageScanner::ConvertImageToHsv(cv::Mat image)
     {
         // Image matrix is empty.
         LOG(ERROR) << "Could not read the image.";
+        isImageEmpty = true;
+        return;
     }
     // Convert RGB into HSV.
     cv::cvtColor(image, image, cv::COLOR_BGR2HSV);
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////
+cv::Mat ImageScanner::ReturnEmptyMatrix()
+{
+    cv::Point topLeftResult(350, 150);
+    cv::Mat emptyMatrix = cv::Mat::zeros(4032, 3024, CV_8UC3);
+    cv::putText(emptyMatrix, "FAILED", topLeftResult, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,255), 5);
+
+    return emptyMatrix;
 }
 
 
@@ -484,6 +516,13 @@ cv::Mat ImageScanner::DetectBoltCircles(cv::Mat edgeMat)
     cv::findContours(edgeMat, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
 
     cv::Mat zerosMatrix = cv::Mat::zeros(edgeMat.rows, edgeMat.cols, CV_8UC3);
+
+    if(contours.size() == 0)
+    {
+        // Contours could not be found - Probably an image without a product or edges of note.
+        cv::cvtColor(zerosMatrix, circlesMatrix, cv::COLOR_BGR2GRAY, 1);
+        return circlesMatrix;
+    }
     
     cv::drawContours(zerosMatrix, contours, hierarchy[0][1], cv::Scalar(255, 255, 255), 2);
 
