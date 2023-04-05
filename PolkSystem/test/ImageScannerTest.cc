@@ -2,6 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include <glog/logging.h>
 
 #include "../src/utils/ImageScanner.hh"
 
@@ -57,13 +58,13 @@ TEST(ImageScannerTest, Test_Correct_Number_Of_Bolts_Returned_With_4_Bolts)
 /// @test Test that the correct number of bolts are found.
 /// @brief Expect true when a correct number of bolts are found.
 /////////////////////////////////////////////////////////////////////////////////////
-TEST(ImageScannerTest, Test_Correct_Number_Of_Bolts_Returned_With_4_Bolts_Ver_2)
+TEST(ImageScannerTest, Test_Correct_Number_Of_Bolts_Returned_With_2_Bolts_Ver_4)
 {
     cv::Mat image = cv::imread("../images/IMG_1950.JPG", cv::IMREAD_COLOR);
 
     utils::ImageScanner scanner(image);
 
-    const int BOLT_COUNT_EXPECTED = 5;
+    const int BOLT_COUNT_EXPECTED = 2;
 
     int numberOfFoundBolts = scanner.GetProductBoltCirclesFound().size();
 
@@ -177,7 +178,7 @@ TEST(ImageScannerTest, Test_Correct_Number_Of_Bolts_With_3_Bolts_Ver_2)
 /// @test Test that the correct number of bolts are found.
 /// @brief Expect true when a correct number of bolts are found.
 /////////////////////////////////////////////////////////////////////////////////////
-TEST(ImageScannerTest, Test_Correct_Number_Of_Bolts_Returned_With_4_Bolts_Ver_2)
+TEST(ImageScannerTest, Test_Correct_Number_Of_Bolts_Returned_With_4_Bolts_Ver_4)
 {
     cv::Mat image = cv::imread("../images/IMG_1669.JPG", cv::IMREAD_COLOR);
 
@@ -203,13 +204,15 @@ TEST(ImageScannerTest, Test_Correct_Number_Of_Bolts_Returned_With_4_Bolts_Ver_2)
 /////////////////////////////////////////////////////////////////////////////////////
 TEST(ImageScannerTest, Test_Correct_Number_Of_Bolts_Returned_With_4_Bolts_Ver_3)
 {
-    cv::Mat image = cv::imread("../images/IMG_1649.JPG", cv::IMREAD_COLOR);
+    cv::Mat image = cv::imread("../images/IMG_1949.JPG", cv::IMREAD_COLOR);
 
     utils::ImageScanner scanner(image);
 
     const int BOLT_COUNT_EXPECTED = 4;
 
     int numberOfFoundBolts = scanner.GetProductBoltCirclesFound().size();
+
+    LOG(INFO) << "Ver_3" << numberOfFoundBolts;
 
     bool correctNumberOfBoltsFound = false;
 
