@@ -1,10 +1,9 @@
 #include <gtest/gtest.h>
-
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
-
 #include "../src/utils/ImageViewer.hh"
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 /// @test Test OpenImage
