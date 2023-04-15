@@ -3,8 +3,8 @@
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <glog/logging.h>
-
 #include "../src/utils/ImageScanner.hh"
+
 
 /////////////////////////////////////////////////////////////////////////////////////
 /// @test Test that the correct number of bolts are found.
