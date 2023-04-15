@@ -7,18 +7,10 @@
 #include <opencv2/core/fast_math.hpp>
 #include <vector>
 #include <string>
-
-// imread:
 #include <opencv2/imgcodecs.hpp>
-// cv::TermCriteria
 #include <opencv2/core/types.hpp>
-
-// CV_32FC2
 #include <opencv2/core/hal/interface.h>
-
 #include <opencv2/core/cvdef.h>
-
-// Current Date and Time
 #include <chrono>
 #include <ctime> 
 
@@ -148,6 +140,13 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
         cv::Point topLeft4(350, 650);
         cv::Point topLeft5(350, 750);
 
+        cv::Point topRight0(2000, 150);
+        cv::Point topRight1(3000, 670);
+        cv::Point topRight2(2100, 440);
+
+        cv::Point topLeftBox0(300, 80);
+        cv::Point topLeftBox1(3050, 760);
+
         productBoltCount = 4;
         productBoltMissingCount = PRODUCT_BOLT_COUNT_EXPECTED - productBoltCount;
         isProductFaulty = false;
@@ -158,10 +157,21 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
             isProductFaultyString = "True";
         }
 
+        // Display relative information about the product.
+        LOG(INFO) << productBoltCount;
+        LOG(INFO) << GetProductBoltCirclesFound().size();
+
+        LOG(INFO) << "PASSED";
+
+        cv::rectangle(detectedBoltsMatrix, topLeftBox0, topLeftBox1, cv::Scalar(255,255,255), cv::FILLED, cv::LINE_8, 0);
+
+        cv::rectangle(detectedBoltsMatrix, topRight0, topRight1, cv::Scalar(0,128,0), cv::FILLED, cv::LINE_8, 0);
+        cv::putText(detectedBoltsMatrix, "PASSED", topRight2, cv::FONT_HERSHEY_SIMPLEX, 7, cv::Scalar(0,0,0), 5);
+
         cv::putText(detectedBoltsMatrix, "PASSED", topLeftResult, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,128,0), 5);
         cv::putText(detectedBoltsMatrix, "ID: " + std::to_string(generatedIDNumber), topLeft0, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
         cv::putText(detectedBoltsMatrix, "Expected Bolts: " + std::to_string(PRODUCT_BOLT_COUNT_EXPECTED), topLeft1, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
-        cv::putText(detectedBoltsMatrix, "Actual Boltst: " + std::to_string(productBoltCount), topLeft2, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
+        cv::putText(detectedBoltsMatrix, "Actual Bolts: " + std::to_string(productBoltCount), topLeft2, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
         cv::putText(detectedBoltsMatrix, "IsFaulty: " + isProductFaultyString, topLeft3, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
         cv::putText(detectedBoltsMatrix, "Fault No.: " + std::to_string(productBoltMissingCount), topLeft4, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
         cv::putText(detectedBoltsMatrix, "Time Processed: " + timeProcessed, topLeft5, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
@@ -310,6 +320,13 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
         cv::Point topLeft4(350, 650);
         cv::Point topLeft5(350, 750);
 
+        cv::Point topRight0(2000, 150);
+        cv::Point topRight1(3000, 670);
+        cv::Point topRight2(2100, 440);
+
+        cv::Point topLeftBox0(300, 80);
+        cv::Point topLeftBox1(3050, 760);
+
         productBoltMissingCount = PRODUCT_BOLT_COUNT_EXPECTED - productBoltCount;
         isProductFaulty = true;
         std::string isProductFaultyString = "False";
@@ -318,6 +335,14 @@ cv::Mat ImageScanner::FindHsvValues(cv::Mat inputImage, const cv::Scalar HSVLowe
         {
             isProductFaultyString = "True";
         }
+
+        // Display relative information about the product.
+        LOG(INFO) << "FAILED";
+
+        cv::rectangle(detectedBoltsMatrix, topLeftBox0, topLeftBox1, cv::Scalar(255,255,255), cv::FILLED, cv::LINE_8, 0);
+
+        cv::rectangle(detectedBoltsMatrix, topRight0, topRight1, cv::Scalar(0,0,255), cv::FILLED, cv::LINE_8, 0);
+        cv::putText(detectedBoltsMatrix, "FAILED", topRight2, cv::FONT_HERSHEY_SIMPLEX, 7, cv::Scalar(0,0,0), 5);
 
         cv::putText(detectedBoltsMatrix, "FAILED", topLeftResult, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,255), 5);
         cv::putText(detectedBoltsMatrix, "ID: " + std::to_string(generatedIDNumber), topLeft0, cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,0), 5);
